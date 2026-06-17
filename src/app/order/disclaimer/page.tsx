@@ -36,9 +36,9 @@ export default function DisclaimerPage() {
     <div>
       <OrderProgress currentStep={2} />
       <Card>
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">Before you order</h2>
+        <h2 className="mb-4 text-xl font-semibold text-text">Before you order</h2>
 
-        <div className="mb-6 space-y-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">
+        <div className="mb-6 space-y-4 rounded-lg border border-amber-700/50 bg-amber-950/40 p-4 text-sm leading-relaxed text-amber-200">
           <p>
             QM is not storing anything you order. Consider it disposable, or find a way to
             store it yourself.
@@ -50,14 +50,14 @@ export default function DisclaimerPage() {
         </div>
 
         <form onSubmit={handleContinue} className="space-y-6">
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-4 hover:bg-surface-muted">
             <input
               type="checkbox"
               className="mt-1 h-4 w-4 shrink-0"
               checked={acknowledged}
               onChange={(e) => setAcknowledged(e.target.checked)}
             />
-            <span className="text-sm leading-relaxed text-slate-700">
+            <span className="text-sm leading-relaxed text-text-muted">
               I acknowledge that QM cannot store anything for me and I am responsible for
               storing everything I order, or disposing of it and reordering next year.
             </span>

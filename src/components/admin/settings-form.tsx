@@ -121,7 +121,7 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
     <form onSubmit={saveSettings} className="space-y-6">
       <Card className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-slate-900">Gmail</h2>
+          <h2 className="font-semibold text-text">Gmail</h2>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -131,7 +131,7 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
             Enabled
           </label>
         </div>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-text-muted">
           Use a Gmail App Password (Google Account → Security → 2-Step Verification → App
           passwords).
         </p>
@@ -191,7 +191,7 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
           Use TLS/SSL (port 465)
         </label>
 
-        <div className="flex flex-wrap items-end gap-3 border-t border-slate-100 pt-4">
+        <div className="flex flex-wrap items-end gap-3 border-t border-border pt-4">
           <div className="min-w-[240px] flex-1">
             <label>Send test email to</label>
             <input
@@ -209,7 +209,7 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
 
       <Card className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-slate-900">Amazon auto-ordering</h2>
+          <h2 className="font-semibold text-text">Amazon auto-ordering</h2>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -219,7 +219,7 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
             Enabled
           </label>
         </div>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-text-muted">
           Full auto-checkout requires Amazon Business API access. Until configured, the
           system can simulate orders for testing or you can enter order IDs manually in the
           queue.
@@ -266,7 +266,7 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
       </Card>
 
       <Card className="space-y-4">
-        <h2 className="font-semibold text-slate-900">Notifications</h2>
+        <h2 className="font-semibold text-text">Notifications</h2>
         <div>
           <label>Admin notification email</label>
           <input
@@ -296,8 +296,8 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
         </div>
       </Card>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {message && <p className="text-sm text-green-700">{message}</p>}
+      {error && <p className="text-sm text-red-400">{error}</p>}
+      {message && <p className="text-sm text-green-400">{message}</p>}
 
       <Button type="submit" size="lg" disabled={loading}>
         {loading ? "Saving..." : "Save settings"}

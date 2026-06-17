@@ -58,7 +58,7 @@ export function UsersManager({ initialUsers }: { initialUsers: UserRow[] }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
       <Card>
-        <h2 className="mb-4 font-semibold text-slate-900">Create user</h2>
+        <h2 className="mb-4 font-semibold text-text">Create user</h2>
         <form onSubmit={createUser} className="space-y-4">
           <div>
             <label htmlFor="user-name">Name</label>
@@ -102,7 +102,7 @@ export function UsersManager({ initialUsers }: { initialUsers: UserRow[] }) {
             </select>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
 
           <Button type="submit" disabled={loading}>
             {loading ? "Creating..." : "Create user"}
@@ -111,22 +111,22 @@ export function UsersManager({ initialUsers }: { initialUsers: UserRow[] }) {
       </Card>
 
       <Card className="overflow-hidden p-0">
-        <div className="border-b border-slate-100 px-6 py-4">
-          <h2 className="font-semibold text-slate-900">Existing users</h2>
+        <div className="border-b border-border px-6 py-4">
+          <h2 className="font-semibold text-text">Existing users</h2>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-border">
           {users.map((user) => (
             <div key={user.id} className="flex items-center justify-between px-6 py-4">
               <div>
-                <p className="font-medium text-slate-900">{user.name}</p>
-                <p className="text-sm text-slate-500">{user.email}</p>
-                <p className="text-xs text-slate-400">Added {formatDate(user.createdAt)}</p>
+                <p className="font-medium text-text">{user.name}</p>
+                <p className="text-sm text-text-muted">{user.email}</p>
+                <p className="text-xs text-text-muted">Added {formatDate(user.createdAt)}</p>
               </div>
               <span
                 className={
                   user.role === "ADMIN"
-                    ? "rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-medium text-brand-700"
-                    : "rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600"
+                    ? "rounded-full bg-brand-600/20 px-2.5 py-0.5 text-xs font-medium text-brand-400"
+                    : "rounded-full bg-surface-muted px-2.5 py-0.5 text-xs font-medium text-text-muted"
                 }
               >
                 {user.role}

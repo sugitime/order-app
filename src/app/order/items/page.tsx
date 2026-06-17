@@ -119,12 +119,12 @@ export default function LineItemsPage() {
       <Card>
         <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">Line items</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="text-xl font-semibold text-text">Line items</h2>
+            <p className="mt-1 text-sm text-text-muted">
               Add each item you would like to order from Amazon.
             </p>
           </div>
-          <div className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600">
+          <div className="rounded-lg bg-surface-muted px-3 py-2 text-sm text-text-muted">
             <span className="font-medium">{summary.name}</span>
             {summary.department && <span> · {summary.department}</span>}
           </div>
@@ -134,15 +134,15 @@ export default function LineItemsPage() {
           {lineItems.map((item, index) => (
             <div
               key={index}
-              className="space-y-4 rounded-lg border border-slate-200 bg-slate-50/50 p-4"
+              className="space-y-4 rounded-lg border border-border bg-surface-muted/50 p-4"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-medium text-slate-800">Item {index + 1}</h3>
+                <h3 className="font-medium text-text">Item {index + 1}</h3>
                 {lineItems.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeItem(index)}
-                    className="text-sm text-red-600 hover:text-red-700"
+                    className="text-sm text-red-400 hover:text-red-300"
                   >
                     Remove
                   </button>
@@ -200,9 +200,9 @@ export default function LineItemsPage() {
             + Add another item
           </Button>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
 
-          <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
+          <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
             <Link href="/order/disclaimer">
               <Button type="button" variant="secondary">
                 Back

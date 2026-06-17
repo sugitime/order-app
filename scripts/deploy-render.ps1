@@ -9,7 +9,7 @@ param(
     [string]$OwnerId = "tea-d8m251i8qa3s73b06upg",
     [string]$Branch = "main",
     [string]$Region = "oregon",
-    [string]$AdminEmail = "kevin@infamousdevel.com",
+    [string]$AdminEmail = "kevin@sugiti.me",
     [string]$AdminPassword = ""
 )
 

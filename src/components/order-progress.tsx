@@ -17,7 +17,7 @@ export function OrderProgress({ currentStep }: { currentStep: number }) {
                 "flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold",
                 currentStep >= step.number
                   ? "bg-brand-600 text-white"
-                  : "bg-slate-200 text-slate-500"
+                  : "bg-surface-muted text-text-muted"
               )}
             >
               {step.number}
@@ -25,7 +25,7 @@ export function OrderProgress({ currentStep }: { currentStep: number }) {
             <span
               className={cn(
                 "hidden text-xs sm:block",
-                currentStep >= step.number ? "text-brand-700" : "text-slate-400"
+                currentStep >= step.number ? "text-brand-400" : "text-text-muted"
               )}
             >
               {step.label}
@@ -35,7 +35,7 @@ export function OrderProgress({ currentStep }: { currentStep: number }) {
             <div
               className={cn(
                 "h-0.5 w-8 sm:w-16",
-                currentStep > step.number ? "bg-brand-600" : "bg-slate-200"
+                currentStep > step.number ? "bg-brand-600" : "bg-border"
               )}
             />
           )}

@@ -14,16 +14,16 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-border bg-surface-raised">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-400">
               QM Admin
             </p>
-            <p className="text-sm text-slate-500">
-              Signed in as <span className="font-medium text-slate-800">{user.name}</span>
+            <p className="text-sm text-text-muted">
+              Signed in as <span className="font-medium text-text">{user.name}</span>
               {user.role === "ADMIN" && (
-                <span className="ml-2 rounded bg-brand-100 px-2 py-0.5 text-xs text-brand-700">
+                <span className="ml-2 rounded bg-brand-600/20 px-2 py-0.5 text-xs text-brand-400">
                   Admin
                 </span>
               )}
@@ -38,7 +38,7 @@ export default async function DashboardLayout({
                   await destroySession();
                   redirect("/admin/login");
                 }}
-                className="text-sm text-slate-500 hover:text-red-600"
+                className="text-sm text-text-muted hover:text-red-400"
               >
                 Sign out
               </button>

@@ -60,8 +60,8 @@ export default function OrderStepOnePage() {
     <div>
       <OrderProgress currentStep={1} />
       <Card>
-        <h2 className="mb-1 text-xl font-semibold text-slate-900">Your information</h2>
-        <p className="mb-6 text-sm text-slate-500">
+        <h2 className="mb-1 text-xl font-semibold text-text">Your information</h2>
+        <p className="mb-6 text-sm text-text-muted">
           Tell us who you are and which department this order is for.
         </p>
 
@@ -94,7 +94,7 @@ export default function OrderStepOnePage() {
             </select>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
 
           <div className="flex justify-end pt-2">
             <Button type="submit" size="lg">

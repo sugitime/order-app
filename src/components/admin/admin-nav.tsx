@@ -37,7 +37,7 @@ export function AdminNav() {
             "rounded-lg px-3 py-2 text-sm font-medium transition",
             pathname.startsWith(link.href)
               ? "bg-brand-600 text-white"
-              : "text-slate-600 hover:bg-slate-100"
+              : "text-text-muted hover:bg-surface-muted hover:text-text"
           )}
         >
           {link.label}

@@ -1,41 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-export function LoginForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const resetSuccess = searchParams.get("reset") === "success";
+export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError("");
+    setMessage("");
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email }),
       });
 
       const data = await response.json();
       if (!response.ok) {
-        setError(data.error ?? "Login failed");
+        setError(data.error ?? "Request failed");
         return;
       }
 
-      const next = searchParams.get("next") ?? "/admin/orders";
-      router.push(next);
-      router.refresh();
+      setMessage(data.message);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -49,7 +44,10 @@ export function LoginForm() {
         <p className="text-xs font-semibold uppercase tracking-wide text-brand-400">
           QM Admin
         </p>
-        <h1 className="mt-1 text-xl font-semibold text-text">Sign in</h1>
+        <h1 className="mt-1 text-xl font-semibold text-text">Forgot password</h1>
+        <p className="mt-2 text-sm text-text-muted">
+          Enter your email and we will send you a reset link if an account exists.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -64,37 +62,17 @@ export function LoginForm() {
             required
           />
         </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <label htmlFor="password" className="mb-0">
-              Password
-            </label>
-            <Link href="/admin/forgot-password" className="text-xs text-brand-400">
-              Forgot password?
-            </Link>
-          </div>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            required
-          />
-        </div>
 
-        {resetSuccess && (
-          <p className="text-sm text-green-400">Password updated. You can sign in now.</p>
-        )}
         {error && <p className="text-sm text-red-400">{error}</p>}
+        {message && <p className="text-sm text-green-400">{message}</p>}
 
         <Button type="submit" className="w-full" size="lg" disabled={loading}>
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? "Sending..." : "Send reset link"}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-text-muted">
-        <Link href="/order">← Back to order form</Link>
+        <Link href="/admin/login">← Back to sign in</Link>
       </p>
     </Card>
   );

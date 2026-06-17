@@ -34,8 +34,8 @@ export default async function OrderQueuePage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Order Queue</h1>
-          <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-semibold text-text">Order Queue</h1>
+        <p className="mt-1 text-sm text-text-muted">
             Approved items ready for Amazon ordering. Auto-order uses configured API
             credentials; you can also enter order details manually.
           </p>
@@ -45,27 +45,27 @@ export default async function OrderQueuePage() {
 
       {items.length === 0 ? (
         <Card>
-          <p className="text-center text-slate-500">No items in the queue.</p>
+          <p className="text-center text-text-muted">No items in the queue.</p>
         </Card>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50">
+        <div className="overflow-hidden rounded-xl border border-border bg-surface-raised shadow-lg shadow-black/20">
+          <table className="min-w-full divide-y divide-border text-sm">
+            <thead className="bg-surface-muted">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Item</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Requester</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Order ID</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Tracking</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Actions</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted">Item</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted">Requester</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted">Status</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted">Order ID</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted">Tracking</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {items.map((item) => (
                 <tr key={item.id} className="align-top">
                   <td className="px-4 py-4">
-                    <p className="font-medium text-slate-900">{item.description}</p>
-                    <p className="mt-1 text-xs text-slate-500">Qty {item.quantity}</p>
+                    <p className="font-medium text-text">{item.description}</p>
+                    <p className="mt-1 text-xs text-text-muted">Qty {item.quantity}</p>
                     <a
                       href={item.amazonUrl}
                       target="_blank"
@@ -75,14 +75,14 @@ export default async function OrderQueuePage() {
                       Amazon link
                     </a>
                     {item.orderError && (
-                      <p className="mt-2 text-xs text-red-600">{item.orderError}</p>
+                      <p className="mt-2 text-xs text-red-400">{item.orderError}</p>
                     )}
                   </td>
-                  <td className="px-4 py-4 text-slate-600">
+                  <td className="px-4 py-4 text-text-muted">
                     <p>{item.order.requesterName}</p>
-                    <p className="text-xs text-slate-400">{item.order.department.name}</p>
+                    <p className="text-xs text-text-muted">{item.order.department.name}</p>
                     {item.queuedAt && (
-                      <p className="mt-1 text-xs text-slate-400">
+                      <p className="mt-1 text-xs text-text-muted">
                         Queued {formatDate(item.queuedAt)}
                       </p>
                     )}
@@ -90,10 +90,10 @@ export default async function OrderQueuePage() {
                   <td className="px-4 py-4">
                     <StatusBadge status={item.status} />
                   </td>
-                  <td className="px-4 py-4 text-slate-600">
+                  <td className="px-4 py-4 text-text-muted">
                     {item.amazonOrderId ?? "—"}
                   </td>
-                  <td className="px-4 py-4 text-slate-600">
+                  <td className="px-4 py-4 text-text-muted">
                     {item.trackingNumber ?? "—"}
                   </td>
                   <td className="px-4 py-4">

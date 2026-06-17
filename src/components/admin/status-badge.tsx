@@ -2,13 +2,13 @@ import { cn } from "@/lib/utils";
 import type { LineItemStatus } from "@prisma/client";
 
 const styles: Record<LineItemStatus, string> = {
-  PENDING: "bg-amber-100 text-amber-800",
-  APPROVED: "bg-green-100 text-green-800",
-  DENIED: "bg-red-100 text-red-800",
-  QUEUED: "bg-blue-100 text-blue-800",
-  ORDERING: "bg-indigo-100 text-indigo-800",
-  ORDERED: "bg-emerald-100 text-emerald-800",
-  FAILED: "bg-rose-100 text-rose-800",
+  PENDING: "bg-amber-900/40 text-amber-300 ring-1 ring-amber-700/50",
+  APPROVED: "bg-green-900/40 text-green-300 ring-1 ring-green-700/50",
+  DENIED: "bg-red-900/40 text-red-300 ring-1 ring-red-700/50",
+  QUEUED: "bg-blue-900/40 text-blue-300 ring-1 ring-blue-700/50",
+  ORDERING: "bg-indigo-900/40 text-indigo-300 ring-1 ring-indigo-700/50",
+  ORDERED: "bg-emerald-900/40 text-emerald-300 ring-1 ring-emerald-700/50",
+  FAILED: "bg-rose-900/40 text-rose-300 ring-1 ring-rose-700/50",
 };
 
 export function StatusBadge({ status }: { status: LineItemStatus }) {

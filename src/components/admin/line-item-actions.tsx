@@ -65,8 +65,8 @@ export function LineItemActions({
       </div>
 
       {showDeny && (
-        <div className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-3">
-          <label className="text-red-800">Reason for denial</label>
+        <div className="space-y-2 rounded-lg border border-red-800/50 bg-red-950/30 p-3">
+          <label className="text-red-300">Reason for denial</label>
           <textarea
             rows={2}
             value={denialReason}
@@ -84,7 +84,7 @@ export function LineItemActions({
         </div>
       )}
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-red-400">{error}</p>}
     </div>
   );
 }

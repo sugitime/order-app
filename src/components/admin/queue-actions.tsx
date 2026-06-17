@@ -64,7 +64,7 @@ export function QueueItemActions({
   }
 
   if (status === "ORDERED") {
-    return <span className="text-xs text-slate-400">Completed</span>;
+    return <span className="text-xs text-text-muted">Completed</span>;
   }
 
   return (
@@ -86,7 +86,7 @@ export function QueueItemActions({
       )}
 
       {showManual && (
-        <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div className="space-y-2 rounded-lg border border-border bg-surface-muted p-3">
           <div>
             <label>Amazon Order ID</label>
             <input
@@ -113,7 +113,7 @@ export function QueueItemActions({
         </div>
       )}
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-red-400">{error}</p>}
     </div>
   );
 }

@@ -36,7 +36,7 @@ export function ProcessAllButton({ count }: { count: number }) {
       <Button onClick={processAll} disabled={loading}>
         {loading ? "Processing..." : `Auto-order all (${count})`}
       </Button>
-      {message && <span className="text-sm text-slate-600">{message}</span>}
+      {message && <span className="text-sm text-text-muted">{message}</span>}
     </div>
   );
 }
