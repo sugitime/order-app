@@ -15,20 +15,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const { requesterName, departmentId, acknowledged, lineItems } = parsed.data;
-
-    const department = await prisma.department.findUnique({
-      where: { id: departmentId, active: true },
-    });
-
-    if (!department) {
-      return NextResponse.json({ error: "Invalid department" }, { status: 400 });
-    }
+    const { requesterName, departmentName, acknowledged, lineItems } = parsed.data;
 
     const order = await prisma.order.create({
       data: {
         requesterName,
-        departmentId,
+        departmentName: departmentName.trim(),
         acknowledged,
         lineItems: {
           create: lineItems.map((item) => ({

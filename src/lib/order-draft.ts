@@ -7,8 +7,7 @@ export type DraftLineItem = {
 
 export type OrderDraft = {
   requesterName: string;
-  departmentId: string;
-  departmentName?: string;
+  departmentName: string;
   acknowledged: boolean;
   lineItems: DraftLineItem[];
 };
@@ -20,7 +19,15 @@ export function getOrderDraft(): OrderDraft | null {
   const raw = sessionStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as OrderDraft;
+    const parsed = JSON.parse(raw) as Partial<OrderDraft> & {
+      departmentId?: string;
+    };
+    return {
+      requesterName: parsed.requesterName ?? "",
+      departmentName: parsed.departmentName ?? "",
+      acknowledged: parsed.acknowledged ?? false,
+      lineItems: parsed.lineItems ?? [],
+    };
   } catch {
     return null;
   }
@@ -37,7 +44,7 @@ export function clearOrderDraft() {
 export function createEmptyDraft(): OrderDraft {
   return {
     requesterName: "",
-    departmentId: "",
+    departmentName: "",
     acknowledged: false,
     lineItems: [],
   };

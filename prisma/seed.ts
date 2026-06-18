@@ -4,23 +4,6 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const departments = [
-    "Engineering",
-    "Marketing",
-    "Operations",
-    "Finance",
-    "Human Resources",
-    "Quality Management",
-  ];
-
-  for (const name of departments) {
-    await prisma.department.upsert({
-      where: { name },
-      update: {},
-      create: { name },
-    });
-  }
-
   const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "kevin@sugiti.me").toLowerCase();
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "changeme123";
   const passwordHash = await bcrypt.hash(adminPassword, 12);

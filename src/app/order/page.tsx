@@ -11,25 +11,16 @@ import {
   saveOrderDraft,
 } from "@/lib/order-draft";
 
-type Department = { id: string; name: string };
-
 export default function OrderStepOnePage() {
   const router = useRouter();
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [requesterName, setRequesterName] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
+  const [departmentName, setDepartmentName] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const draft = getOrderDraft() ?? createEmptyDraft();
     setRequesterName(draft.requesterName);
-    setDepartmentId(draft.departmentId);
-
-    fetch("/api/departments")
-      .then((res) => res.json())
-      .then((data) => setDepartments(data.departments ?? []))
-      .finally(() => setLoading(false));
+    setDepartmentName(draft.departmentName);
   }, []);
 
   function handleContinue(event: React.FormEvent) {
@@ -40,18 +31,16 @@ export default function OrderStepOnePage() {
       setError("Please enter your name.");
       return;
     }
-    if (!departmentId) {
-      setError("Please select a department.");
+    if (!departmentName.trim()) {
+      setError("Please enter your department.");
       return;
     }
 
-    const departmentName = departments.find((d) => d.id === departmentId)?.name;
     const draft = getOrderDraft() ?? createEmptyDraft();
     saveOrderDraft({
       ...draft,
       requesterName: requesterName.trim(),
-      departmentId,
-      departmentName,
+      departmentName: departmentName.trim(),
     });
     router.push("/order/disclaimer");
   }
@@ -79,19 +68,13 @@ export default function OrderStepOnePage() {
 
           <div>
             <label htmlFor="department">Department</label>
-            <select
+            <input
               id="department"
-              value={departmentId}
-              onChange={(e) => setDepartmentId(e.target.value)}
-              disabled={loading}
-            >
-              <option value="">Select a department</option>
-              {departments.map((dept) => (
-                <option key={dept.id} value={dept.id}>
-                  {dept.name}
-                </option>
-              ))}
-            </select>
+              value={departmentName}
+              onChange={(e) => setDepartmentName(e.target.value)}
+              placeholder="e.g. Engineering, Marketing, Quality Management"
+              autoComplete="organization"
+            />
           </div>
 
           {error && <p className="text-sm text-red-400">{error}</p>}

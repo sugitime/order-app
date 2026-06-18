@@ -20,11 +20,7 @@ export async function queueApprovedItems(lineItemIds: string[]) {
 export async function processQueueItem(lineItemId: string) {
   const item = await prisma.lineItem.findUnique({
     where: { id: lineItemId },
-    include: {
-      order: {
-        include: { department: true },
-      },
-    },
+    include: { order: true },
   });
 
   if (!item) {
@@ -67,9 +63,7 @@ export async function processQueueItem(lineItemId: string) {
       trackingNumber: result.trackingNumber ?? null,
       orderError: null,
     },
-    include: {
-      order: { include: { department: true } },
-    },
+    include: { order: true },
   });
 
   const settings = await getAppSettings();
@@ -79,7 +73,7 @@ export async function processQueueItem(lineItemId: string) {
       [
         `Item: ${updated.description}`,
         `Requester: ${updated.order.requesterName}`,
-        `Department: ${updated.order.department.name}`,
+        `Department: ${updated.order.departmentName}`,
         `Amazon Order ID: ${result.amazonOrderId}`,
         result.trackingNumber ? `Tracking: ${result.trackingNumber}` : "Tracking: pending",
       ].join("\n")
@@ -113,10 +107,7 @@ export async function manuallyCompleteOrder(
 export async function sendSubmissionNotification(orderId: string) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: {
-      department: true,
-      lineItems: true,
-    },
+    include: { lineItems: true },
   });
 
   if (!order) return;
@@ -137,7 +128,7 @@ export async function sendSubmissionNotification(orderId: string) {
     `New order request from ${order.requesterName}`,
     [
       `Requester: ${order.requesterName}`,
-      `Department: ${order.department.name}`,
+      `Department: ${order.departmentName}`,
       `Items:\n${itemList}`,
       "",
       `Review in admin: ${process.env.APP_URL ?? ""}/admin/orders`,
@@ -151,9 +142,7 @@ export async function sendReviewNotification(
 ) {
   const item = await prisma.lineItem.findUnique({
     where: { id: lineItemId },
-    include: {
-      order: { include: { department: true } },
-    },
+    include: { order: true },
   });
 
   if (!item) return;
@@ -174,7 +163,7 @@ export async function sendReviewNotification(
     text: [
       `Item: ${item.description}`,
       `Requester: ${item.order.requesterName}`,
-      `Department: ${item.order.department.name}`,
+      `Department: ${item.order.departmentName}`,
       `Status: ${action}`,
       action === "denied" && item.denialReason ? `Reason: ${item.denialReason}` : "",
     ]

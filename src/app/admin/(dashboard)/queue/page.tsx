@@ -21,9 +21,7 @@ export default async function OrderQueuePage() {
       },
     },
     orderBy: [{ status: "asc" }, { queuedAt: "asc" }],
-    include: {
-      order: { include: { department: true } },
-    },
+    include: { order: true },
   });
 
   const pendingCount = items.filter(
@@ -80,7 +78,7 @@ export default async function OrderQueuePage() {
                   </td>
                   <td className="px-4 py-4 text-text-muted">
                     <p>{item.order.requesterName}</p>
-                    <p className="text-xs text-text-muted">{item.order.department.name}</p>
+                    <p className="text-xs text-text-muted">{item.order.departmentName}</p>
                     {item.queuedAt && (
                       <p className="mt-1 text-xs text-text-muted">
                         Queued {formatDate(item.queuedAt)}

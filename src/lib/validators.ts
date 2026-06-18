@@ -26,12 +26,12 @@ export const lineItemSchema = z.object({
 
 export const orderStepOneSchema = z.object({
   requesterName: z.string().min(1, "Name is required").max(200),
-  departmentId: z.string().min(1, "Department is required"),
+  departmentName: z.string().min(1, "Department is required").max(200),
 });
 
 export const orderSubmitSchema = z.object({
   requesterName: z.string().min(1).max(200),
-  departmentId: z.string().min(1),
+  departmentName: z.string().min(1).max(200),
   acknowledged: z.literal(true, {
     errorMap: () => ({ message: "You must acknowledge the disclaimer" }),
   }),

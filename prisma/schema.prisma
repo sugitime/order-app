@@ -48,27 +48,16 @@ model PasswordResetToken {
   @@index([userId])
 }
 
-model Department {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  orders Order[]
-}
-
 model Order {
   id              String   @id @default(cuid())
   requesterName   String
-  departmentId    String
+  departmentName  String
   acknowledged    Boolean  @default(false)
   submittedAt     DateTime @default(now())
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  department Department @relation(fields: [departmentId], references: [id])
-  lineItems  LineItem[]
+  lineItems LineItem[]
 }
 
 model LineItem {

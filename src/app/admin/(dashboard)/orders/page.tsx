@@ -10,7 +10,6 @@ export default async function AdminOrdersPage() {
   const orders = await prisma.order.findMany({
     orderBy: { submittedAt: "desc" },
     include: {
-      department: true,
       lineItems: {
         orderBy: { createdAt: "asc" },
         include: {
@@ -51,7 +50,7 @@ export default async function AdminOrdersPage() {
               <div>
                 <h2 className="font-semibold text-text">{order.requesterName}</h2>
                 <p className="text-sm text-text-muted">
-                  {order.department.name} · Submitted {formatDate(order.submittedAt)}
+                  {order.departmentName} · Submitted {formatDate(order.submittedAt)}
                 </p>
               </div>
               <p className="text-xs text-text-muted">{order.id}</p>

@@ -14,7 +14,7 @@ export default function DisclaimerPage() {
 
   useEffect(() => {
     const draft = getOrderDraft();
-    if (!draft?.requesterName || !draft.departmentId) {
+    if (!draft?.requesterName || !draft.departmentName) {
       router.replace("/order");
       return;
     }

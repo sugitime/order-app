@@ -30,13 +30,13 @@ export default function LineItemsPage() {
 
   useEffect(() => {
     const draft = getOrderDraft();
-    if (!draft?.requesterName || !draft.departmentId || !draft.acknowledged) {
+    if (!draft?.requesterName || !draft.departmentName || !draft.acknowledged) {
       router.replace("/order");
       return;
     }
     setSummary({
       name: draft.requesterName,
-      department: draft.departmentName ?? "",
+      department: draft.departmentName,
     });
     if (draft.lineItems.length > 0) {
       setLineItems(draft.lineItems);
@@ -92,7 +92,7 @@ export default function LineItemsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           requesterName: draft.requesterName,
-          departmentId: draft.departmentId,
+          departmentName: draft.departmentName,
           acknowledged: true,
           lineItems,
         }),
