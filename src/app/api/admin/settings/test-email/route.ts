@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
-import { getAppSettings, mergeGmailConfig } from "@/lib/config";
+import { applyEmailEnvOverrides, getAppSettings, mergeGmailConfig } from "@/lib/config";
 import { renderEmailTemplate } from "@/lib/email-templates";
 import { sendEmailWithConfig } from "@/lib/email";
 import { gmailConfigSchema } from "@/lib/validators";
@@ -44,9 +44,11 @@ export async function POST(request: Request) {
     }
 
     const saved = await getAppSettings();
-    const gmail = parsed.data.gmail
-      ? mergeGmailConfig(saved.gmail, parsed.data.gmail)
-      : saved.gmail;
+    const gmail = applyEmailEnvOverrides(
+      parsed.data.gmail
+        ? mergeGmailConfig(saved.gmail, parsed.data.gmail)
+        : saved.gmail
+    );
 
     if (!gmail.enabled) {
       return NextResponse.json(

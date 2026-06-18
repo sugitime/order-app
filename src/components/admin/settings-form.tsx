@@ -160,9 +160,9 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
           </label>
         </div>
         <p className="text-sm text-text-muted">
-          Use Resend (HTTP API) on Render&apos;s free plan — SMTP ports 25, 465,
-          and 587 are blocked. Upgrade to a paid Render instance or switch provider to SMTP for
-          Gmail and other mail servers.
+          On a paid Render instance, use SMTP with Gmail (app password) or another mail server.
+          Resend (HTTP API) works on all plans if you prefer not to use SMTP. Server env vars
+          such as <code className="text-xs">SMTP_PASSWORD</code> override saved settings.
         </p>
         <div>
           <label htmlFor="email-provider">Provider</label>
@@ -173,8 +173,8 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
               updateGmail("provider", e.target.value as AppSettings["gmail"]["provider"])
             }
           >
-            <option value="resend">Resend (HTTP API — works on Render free)</option>
-            <option value="smtp">SMTP (Gmail, etc. — requires paid Render plan)</option>
+            <option value="smtp">SMTP (Gmail, etc.)</option>
+            <option value="resend">Resend (HTTP API)</option>
           </select>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -236,7 +236,7 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
                   autoComplete="new-password"
                 />
                 <p className="mt-1 text-xs text-text-muted">
-                  Password for the From email account on your mail server.
+                  Gmail app password for the From email account (not your regular Gmail password).
                 </p>
               </div>
               <label className="flex items-center gap-2 text-sm sm:col-span-2">

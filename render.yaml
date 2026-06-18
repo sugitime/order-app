@@ -8,9 +8,8 @@ services:
   - type: web
     name: order-app
     runtime: docker
-    # Free plan blocks outbound SMTP (ports 25, 465, 587). Use Resend in Admin → Settings,
-    # or set plan to starter ($7/mo) for SMTP. Requires payment method on Render account.
-    plan: free
+    # Paid plan required for outbound SMTP (ports 25, 465, 587). Starter ($7/mo) is enough.
+    plan: starter
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /order
@@ -26,7 +25,19 @@ services:
       - key: APP_URL
         sync: false
       - key: RUN_SEED
-        value: "true"
+        value: "false"
+      - key: EMAIL_PROVIDER
+        value: smtp
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
       - key: SEED_ADMIN_EMAIL
         sync: false
       - key: SEED_ADMIN_PASSWORD

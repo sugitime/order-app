@@ -5,10 +5,47 @@ import type {
   AmazonConfig,
   AppSettings,
   DisclaimerConfig,
+  EmailProvider,
   EmailTemplatesConfig,
   GmailConfig,
   NotificationConfig,
 } from "@/types/config";
+
+function parseEnvBool(value: string | undefined): boolean | undefined {
+  if (value === undefined || value === "") return undefined;
+  return value === "true" || value === "1";
+}
+
+export function applyEmailEnvOverrides(gmail: GmailConfig): GmailConfig {
+  const provider = process.env.EMAIL_PROVIDER?.trim().toLowerCase();
+  const password =
+    process.env.SMTP_PASSWORD?.trim() || process.env.GMAIL_APP_PASSWORD?.trim();
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const fromEmail =
+    process.env.SMTP_FROM_EMAIL?.trim() || process.env.GMAIL_FROM_EMAIL?.trim();
+  const fromName = process.env.SMTP_FROM_NAME?.trim();
+  const host = process.env.SMTP_HOST?.trim();
+  const port = process.env.SMTP_PORT?.trim();
+  const secure = process.env.SMTP_SECURE?.trim();
+  const enabled = process.env.EMAIL_ENABLED?.trim();
+
+  return {
+    ...gmail,
+    ...(provider === "smtp" || provider === "resend"
+      ? { provider: provider as EmailProvider }
+      : {}),
+    ...(enabled !== undefined ? { enabled: parseEnvBool(enabled) ?? gmail.enabled } : {}),
+    ...(host ? { host } : {}),
+    ...(port ? { port: parseInt(port, 10) || gmail.port } : {}),
+    ...(secure !== undefined ? { secure: parseEnvBool(secure) ?? gmail.secure } : {}),
+    ...(password ? { password } : {}),
+    ...(apiKey ? { apiKey } : {}),
+    ...(fromEmail
+      ? { fromEmail: fromEmail.toLowerCase(), user: fromEmail.toLowerCase() }
+      : {}),
+    ...(fromName ? { fromName } : {}),
+  };
+}
 
 const DEFAULT_SETTINGS: AppSettings = {
   gmail: {
@@ -50,7 +87,7 @@ export async function getAppSettings(): Promise<AppSettings> {
 
   const stored = record.value as Partial<AppSettings>;
   return {
-    gmail: { ...DEFAULT_SETTINGS.gmail, ...stored.gmail },
+    gmail: applyEmailEnvOverrides({ ...DEFAULT_SETTINGS.gmail, ...stored.gmail }),
     amazon: { ...DEFAULT_SETTINGS.amazon, ...stored.amazon },
     notifications: { ...DEFAULT_SETTINGS.notifications, ...stored.notifications },
     emailTemplates: mergeEmailTemplates(

@@ -56,6 +56,35 @@ async function sendViaResend(
   return { sent: true as const };
 }
 
+function formatSmtpError(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return "SMTP send failed.";
+  }
+
+  const message = error.message;
+  const code = "code" in error ? String(error.code) : "";
+
+  if (
+    code === "ECONNREFUSED" ||
+    code === "ETIMEDOUT" ||
+    code === "ESOCKET" ||
+    message.includes("connect ETIMEDOUT") ||
+    message.includes("connect ECONNREFUSED")
+  ) {
+    return (
+      "Could not connect to the SMTP server. On Render's free plan, outbound SMTP ports " +
+      "(25, 465, 587) are blocked — upgrade the web service instance to Starter or above, " +
+      "then redeploy."
+    );
+  }
+
+  if (message.includes("Invalid login") || message.includes("535")) {
+    return "SMTP authentication failed. Use a Gmail app password (not your regular password).";
+  }
+
+  return message;
+}
+
 async function sendViaSmtp(
   gmail: GmailConfig,
   options: {
@@ -72,23 +101,31 @@ async function sendViaSmtp(
     host: gmail.host,
     port: gmail.port,
     secure: gmail.secure,
+    requireTLS: !gmail.secure && gmail.port === 587,
     auth: {
       user: fromAddress,
       pass: gmail.password,
     },
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 30_000,
   });
 
-  await transporter.sendMail({
-    from,
-    envelope: {
-      from: fromAddress,
+  try {
+    await transporter.sendMail({
+      from,
+      envelope: {
+        from: fromAddress,
+        to: options.to,
+      },
       to: options.to,
-    },
-    to: options.to,
-    subject: options.subject,
-    text: options.text,
-    html: options.html ?? options.text.replace(/\n/g, "<br>"),
-  });
+      subject: options.subject,
+      text: options.text,
+      html: options.html ?? options.text.replace(/\n/g, "<br>"),
+    });
+  } catch (error) {
+    throw new Error(formatSmtpError(error));
+  }
 
   return { sent: true as const };
 }

@@ -30,7 +30,7 @@ async function main() {
       id: "singleton",
       value: {
         gmail: {
-          provider: "resend",
+          provider: "smtp",
           enabled: false,
           host: "smtp.gmail.com",
           port: 587,
