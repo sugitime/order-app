@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const links = [
+  { href: "/admin/reports", label: "Reports", adminOnly: false },
   { href: "/admin/orders", label: "Orders", adminOnly: false },
   { href: "/admin/queue", label: "Order Queue", adminOnly: false },
   { href: "/admin/log", label: "Log", adminOnly: false },

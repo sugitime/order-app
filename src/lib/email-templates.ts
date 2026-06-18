@@ -111,7 +111,7 @@ export const DEFAULT_EMAIL_TEMPLATES: EmailTemplatesConfig = {
       "<strong>Email:</strong> {{requesterEmail}}<br>" +
       "<strong>Department:</strong> {{departmentName}}<br>" +
       "<strong>Reference:</strong> {{orderId}}</p>" +
-      "<p><strong>Items:</strong></p><pre>{{itemList}}</pre>" +
+      "<p><strong>Items:</strong></p>{{itemList}}" +
       '<p><a href="{{adminUrl}}">Review in admin</a></p>',
   },
   orderSubmissionConfirmation: {
@@ -122,14 +122,14 @@ export const DEFAULT_EMAIL_TEMPLATES: EmailTemplatesConfig = {
       "<p><strong>{{orderId}}</strong></p>" +
       "<p>You will receive another email when your items have been reviewed.</p>" +
       "<p><strong>Department:</strong> {{departmentName}}</p>" +
-      "<p><strong>Items submitted:</strong></p><pre>{{itemList}}</pre>",
+      "<p><strong>Items submitted:</strong></p>{{itemList}}",
   },
   orderReviewComplete: {
     subject: "Your order request has been reviewed",
     bodyHtml:
       "<p>Hi {{requesterName}},</p>" +
       "<p>Your order request has been reviewed. Here is the status of each item:</p>" +
-      "<pre>{{itemList}}</pre>" +
+      "{{itemList}}" +
       "<p><strong>Reference:</strong> {{orderId}}</p>",
   },
   lineItemApproved: {
@@ -204,6 +204,7 @@ function htmlToPlainText(html: string): string {
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>/gi, "\n\n")
     .replace(/<\/li>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "\n")
     .replace(/<\/h[1-6]>/gi, "\n\n")
     .replace(/<\/pre>/gi, "\n")
     .replace(/<\/div>/gi, "\n");
@@ -226,11 +227,12 @@ function htmlToPlainText(html: string): string {
 
 export function renderEmailTemplate(
   template: { subject: string; bodyHtml: string },
-  tokens: Record<string, string>
+  tokens: Record<string, string>,
+  textTokens?: Record<string, string>
 ): RenderedEmail {
   const subject = replaceTokens(template.subject, tokens);
   const html = replaceTokens(template.bodyHtml, tokens);
-  const text = htmlToPlainText(html);
+  const text = htmlToPlainText(replaceTokens(template.bodyHtml, textTokens ?? tokens));
 
   return { subject, html, text };
 }

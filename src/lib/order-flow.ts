@@ -1,7 +1,12 @@
 import { LineItemStatus } from "@prisma/client";
 import { placeAmazonOrder } from "@/lib/amazon";
-import { formatCurrency } from "@/lib/amazon-product";
 import { getAppSettings } from "@/lib/config";
+import {
+  formatReviewedItemListHtml,
+  formatReviewedItemListText,
+  formatSubmittedItemListHtml,
+  formatSubmittedItemListText,
+} from "@/lib/email-item-list";
 import { getAdminUrl, renderEmailTemplate } from "@/lib/email-templates";
 import { notifyAdmins, sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
@@ -105,33 +110,6 @@ export async function manuallyCompleteOrder(
   });
 }
 
-function formatSubmittedItemList(
-  lineItems: {
-    description: string;
-    quantity: number;
-    amazonUrl: string;
-    unitPrice: { toString(): string } | null;
-    priceCurrency: string | null;
-    isPrimeEligible: boolean | null;
-  }[]
-): string {
-  return lineItems
-    .map((item, index) => {
-      const price =
-        item.unitPrice != null
-          ? formatCurrency(Number(item.unitPrice), item.priceCurrency ?? "USD")
-          : "price unavailable";
-      const prime =
-        item.isPrimeEligible === null
-          ? "Prime unknown"
-          : item.isPrimeEligible
-            ? "Prime"
-            : "Not Prime";
-      return `${index + 1}. ${item.description} (qty ${item.quantity}, ${price}, ${prime})\n   ${item.amazonUrl}`;
-    })
-    .join("\n");
-}
-
 export async function sendSubmissionNotification(orderId: string) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -145,16 +123,21 @@ export async function sendSubmissionNotification(orderId: string) {
     return;
   }
 
-  const itemList = formatSubmittedItemList(order.lineItems);
+  const itemListHtml = formatSubmittedItemListHtml(order.lineItems);
+  const itemListText = formatSubmittedItemListText(order.lineItems);
 
-  const rendered = renderEmailTemplate(settings.emailTemplates.orderSubmitted, {
-    requesterName: order.requesterName,
-    requesterEmail: order.requesterEmail,
-    departmentName: order.departmentName,
-    orderId: order.id,
-    itemList,
-    adminUrl: getAdminUrl("/admin/orders"),
-  });
+  const rendered = renderEmailTemplate(
+    settings.emailTemplates.orderSubmitted,
+    {
+      requesterName: order.requesterName,
+      requesterEmail: order.requesterEmail,
+      departmentName: order.departmentName,
+      orderId: order.id,
+      itemList: itemListHtml,
+      adminUrl: getAdminUrl("/admin/orders"),
+    },
+    { itemList: itemListText }
+  );
   await notifyAdmins(rendered);
 }
 
@@ -167,7 +150,8 @@ export async function sendSubmissionConfirmationToRequester(orderId: string) {
   if (!order?.requesterEmail) return;
 
   const settings = await getAppSettings();
-  const itemList = formatSubmittedItemList(order.lineItems);
+  const itemListHtml = formatSubmittedItemListHtml(order.lineItems);
+  const itemListText = formatSubmittedItemListText(order.lineItems);
 
   const rendered = renderEmailTemplate(
     settings.emailTemplates.orderSubmissionConfirmation,
@@ -176,8 +160,9 @@ export async function sendSubmissionConfirmationToRequester(orderId: string) {
       requesterEmail: order.requesterEmail,
       departmentName: order.departmentName,
       orderId: order.id,
-      itemList,
-    }
+      itemList: itemListHtml,
+    },
+    { itemList: itemListText }
   );
 
   await sendEmail({
@@ -186,12 +171,6 @@ export async function sendSubmissionConfirmationToRequester(orderId: string) {
     text: rendered.text,
     html: rendered.html,
   });
-}
-
-function itemReviewLabel(status: LineItemStatus): string {
-  if (status === LineItemStatus.DENIED) return "Denied";
-  if (status === LineItemStatus.PENDING) return "Pending";
-  return "Approved";
 }
 
 export async function maybeSendOrderReviewSummary(orderId: string) {
@@ -211,23 +190,21 @@ export async function maybeSendOrderReviewSummary(orderId: string) {
     return;
   }
 
-  const itemLines = order.lineItems.map((item, index) => {
-    const status = itemReviewLabel(item.status);
-    const reason =
-      item.status === LineItemStatus.DENIED && item.denialReason
-        ? ` — ${item.denialReason}`
-        : "";
-    return `${index + 1}. ${item.description} — ${status}${reason}`;
-  });
+  const itemListHtml = formatReviewedItemListHtml(order.lineItems);
+  const itemListText = formatReviewedItemListText(order.lineItems);
 
   const settings = await getAppSettings();
-  const rendered = renderEmailTemplate(settings.emailTemplates.orderReviewComplete, {
-    requesterName: order.requesterName,
-    requesterEmail: order.requesterEmail,
-    departmentName: order.departmentName,
-    orderId: order.id,
-    itemList: itemLines.join("\n"),
-  });
+  const rendered = renderEmailTemplate(
+    settings.emailTemplates.orderReviewComplete,
+    {
+      requesterName: order.requesterName,
+      requesterEmail: order.requesterEmail,
+      departmentName: order.departmentName,
+      orderId: order.id,
+      itemList: itemListHtml,
+    },
+    { itemList: itemListText }
+  );
 
   await sendEmail({
     to: order.requesterEmail,
