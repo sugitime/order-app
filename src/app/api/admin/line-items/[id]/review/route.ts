@@ -2,6 +2,7 @@ import { LineItemStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import {
+  maybeSendOrderReviewSummary,
   queueApprovedItems,
   sendReviewNotification,
 } from "@/lib/order-flow";
@@ -64,6 +65,7 @@ export async function POST(
     }
 
     await sendReviewNotification(id, parsed.data.action === "approve" ? "approved" : "denied");
+    await maybeSendOrderReviewSummary(updated.orderId);
 
     return NextResponse.json({ lineItem: updated });
   } catch (error) {

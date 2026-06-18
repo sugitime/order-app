@@ -26,11 +26,13 @@ export const lineItemSchema = z.object({
 
 export const orderStepOneSchema = z.object({
   requesterName: z.string().min(1, "Name is required").max(200),
+  requesterEmail: z.string().email("A valid email address is required").max(200),
   departmentName: z.string().min(1, "Department is required").max(200),
 });
 
 export const orderSubmitSchema = z.object({
   requesterName: z.string().min(1).max(200),
+  requesterEmail: z.string().email().max(200),
   departmentName: z.string().min(1).max(200),
   acknowledged: z.literal(true, {
     errorMap: () => ({ message: "You must acknowledge the disclaimer" }),
@@ -76,4 +78,29 @@ export const notificationConfigSchema = z.object({
   notifyOnDeny: z.boolean(),
   notifyOnOrder: z.boolean(),
   adminEmail: z.string().email().or(z.literal("")),
+});
+
+export const emailTemplateSchema = z.object({
+  subject: z.string().min(1, "Subject is required").max(500),
+  bodyHtml: z.string().min(1, "Body is required").max(50000),
+});
+
+export const disclaimerConfigSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200),
+  bodyHtml: z.string().min(1, "Disclaimer body is required").max(50000),
+  acknowledgmentText: z
+    .string()
+    .min(1, "Acknowledgment text is required")
+    .max(2000),
+});
+
+export const emailTemplatesSchema = z.object({
+  orderSubmitted: emailTemplateSchema.optional(),
+  orderSubmissionConfirmation: emailTemplateSchema.optional(),
+  orderReviewComplete: emailTemplateSchema.optional(),
+  lineItemApproved: emailTemplateSchema.optional(),
+  lineItemDenied: emailTemplateSchema.optional(),
+  orderPlaced: emailTemplateSchema.optional(),
+  passwordReset: emailTemplateSchema.optional(),
+  testEmail: emailTemplateSchema.optional(),
 });

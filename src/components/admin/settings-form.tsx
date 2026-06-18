@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { EmailTemplatesSection } from "@/components/admin/email-template-editor";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DEFAULT_DISCLAIMER } from "@/lib/disclaimer";
 import type { AppSettings } from "@/types/config";
 
 type MaskedSettings = AppSettings;
@@ -46,6 +49,16 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
     }));
   }
 
+  function updateDisclaimer<K extends keyof AppSettings["disclaimer"]>(
+    key: K,
+    value: AppSettings["disclaimer"][K]
+  ) {
+    setSettings((prev) => ({
+      ...prev,
+      disclaimer: { ...prev.disclaimer, [key]: value },
+    }));
+  }
+
   async function saveSettings(event: React.FormEvent) {
     event.preventDefault();
     setLoading(true);
@@ -59,6 +72,7 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
       const payload = {
         gmail: {
           ...gmailWithoutPassword,
+          user: settings.gmail.fromEmail.trim().toLowerCase(),
           ...(gmailPassword ? { password: gmailPassword } : {}),
         },
         amazon: {
@@ -66,6 +80,8 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
           ...(amazonSecret ? { secretAccessKey: amazonSecret } : {}),
         },
         notifications: settings.notifications,
+        emailTemplates: settings.emailTemplates,
+        disclaimer: settings.disclaimer,
       };
 
       const response = await fetch("/api/admin/settings", {
@@ -97,10 +113,18 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
     setMessage("");
 
     try {
+      const { password: _gmailPw, ...gmailWithoutPassword } = settings.gmail;
+
       const response = await fetch("/api/admin/settings/test-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: testEmail }),
+        body: JSON.stringify({
+          to: testEmail,
+          gmail: {
+            ...gmailWithoutPassword,
+            ...(gmailPassword ? { password: gmailPassword } : {}),
+          },
+        }),
       });
 
       const data = await response.json();
@@ -121,7 +145,7 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
     <form onSubmit={saveSettings} className="space-y-6">
       <Card className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-text">Gmail</h2>
+          <h2 className="font-semibold text-text">SMTP email</h2>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -132,10 +156,27 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
           </label>
         </div>
         <p className="text-sm text-text-muted">
-          Use a Gmail App Password (Google Account → Security → 2-Step Verification → App
-          passwords).
+          Messages are sent from the address below. SMTP authentication uses that same address
+          so your personal login is never exposed to recipients.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label>From email</label>
+            <input
+              type="email"
+              value={settings.gmail.fromEmail}
+              onChange={(e) => updateGmail("fromEmail", e.target.value)}
+              placeholder="noreply@sugiti.me"
+            />
+          </div>
+          <div>
+            <label>From name</label>
+            <input
+              value={settings.gmail.fromName}
+              onChange={(e) => updateGmail("fromName", e.target.value)}
+              placeholder="QM Order System"
+            />
+          </div>
           <div>
             <label>SMTP host</label>
             <input
@@ -151,35 +192,18 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
               onChange={(e) => updateGmail("port", parseInt(e.target.value, 10) || 587)}
             />
           </div>
-          <div>
-            <label>Gmail address</label>
-            <input
-              value={settings.gmail.user}
-              onChange={(e) => updateGmail("user", e.target.value)}
-            />
-          </div>
-          <div>
-            <label>App password</label>
+          <div className="sm:col-span-2">
+            <label>SMTP password</label>
             <input
               type="password"
               value={gmailPassword}
               onChange={(e) => setGmailPassword(e.target.value)}
-              placeholder={settings.gmail.password || "Enter app password"}
+              placeholder="********"
+              autoComplete="new-password"
             />
-          </div>
-          <div>
-            <label>From email</label>
-            <input
-              value={settings.gmail.fromEmail}
-              onChange={(e) => updateGmail("fromEmail", e.target.value)}
-            />
-          </div>
-          <div>
-            <label>From name</label>
-            <input
-              value={settings.gmail.fromName}
-              onChange={(e) => updateGmail("fromName", e.target.value)}
-            />
+            <p className="mt-1 text-xs text-text-muted">
+              Password for the From email account on your mail server.
+            </p>
           </div>
         </div>
         <label className="flex items-center gap-2 text-sm">
@@ -220,9 +244,10 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
           </label>
         </div>
         <p className="text-sm text-text-muted">
-          Full auto-checkout requires Amazon Business API access. Until configured, the
-          system can simulate orders for testing or you can enter order IDs manually in the
-          queue.
+          Product Advertising API credentials are also used to fetch item price and Prime
+          eligibility when orders are submitted. Full auto-checkout requires Amazon Business
+          API access; until configured, the system can simulate orders for testing or you can
+          enter order IDs manually in the queue.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -263,6 +288,79 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
             />
           </div>
         </div>
+      </Card>
+
+      <Card className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-semibold text-text">Order disclaimer</h2>
+            <p className="mt-1 text-sm text-text-muted">
+              Content shown on step 2 of the public order form before requesters add line items.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              setSettings((prev) => ({ ...prev, disclaimer: { ...DEFAULT_DISCLAIMER } }))
+            }
+            className="shrink-0 text-xs text-text-muted transition hover:text-brand-400"
+          >
+            Reset to default
+          </button>
+        </div>
+
+        <div>
+          <label htmlFor="disclaimer-title">Page title</label>
+          <input
+            id="disclaimer-title"
+            value={settings.disclaimer.title}
+            onChange={(e) => updateDisclaimer("title", e.target.value)}
+            placeholder="Before you order"
+          />
+        </div>
+
+        <div>
+          <label>Disclaimer text</label>
+          <RichTextEditor
+            value={settings.disclaimer.bodyHtml}
+            onChange={(bodyHtml) => updateDisclaimer("bodyHtml", bodyHtml)}
+            placeholder="Write the disclaimer shown to requesters..."
+            minHeight="140px"
+          />
+          <div
+            className="mt-3 rounded-lg border border-amber-700/50 bg-amber-950/40 p-4 text-sm leading-relaxed text-amber-200 [&_a]:text-amber-100 [&_a]:underline [&_li]:ml-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_p+_p]:mt-4 [&_ul]:list-disc [&_ul]:pl-4"
+            dangerouslySetInnerHTML={{ __html: settings.disclaimer.bodyHtml }}
+          />
+          <p className="mt-1 text-xs text-text-muted">Preview of how the disclaimer appears to requesters.</p>
+        </div>
+
+        <div>
+          <label htmlFor="disclaimer-ack">Acknowledgment checkbox text</label>
+          <textarea
+            id="disclaimer-ack"
+            rows={3}
+            value={settings.disclaimer.acknowledgmentText}
+            onChange={(e) => updateDisclaimer("acknowledgmentText", e.target.value)}
+            placeholder="I acknowledge that..."
+          />
+        </div>
+      </Card>
+
+      <Card className="space-y-4">
+        <div>
+          <h2 className="font-semibold text-text">Email templates</h2>
+          <p className="mt-1 text-sm text-text-muted">
+            Customize the subject and body for each automated email. Use tokens like{" "}
+            <code className="rounded bg-surface-muted px-1 py-0.5 font-mono text-xs text-brand-400">
+              {"{{requesterName}}"}
+            </code>{" "}
+            to insert dynamic values.
+          </p>
+        </div>
+        <EmailTemplatesSection
+          templates={settings.emailTemplates}
+          onChange={(emailTemplates) => setSettings((prev) => ({ ...prev, emailTemplates }))}
+        />
       </Card>
 
       <Card className="space-y-4">

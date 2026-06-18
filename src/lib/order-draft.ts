@@ -3,10 +3,16 @@ export type DraftLineItem = {
   amazonUrl: string;
   quantity: number;
   justification: string;
+  unitPrice?: number | null;
+  priceCurrency?: string | null;
+  priceDisplay?: string | null;
+  isPrimeEligible?: boolean | null;
+  priceLookupError?: string | null;
 };
 
 export type OrderDraft = {
   requesterName: string;
+  requesterEmail: string;
   departmentName: string;
   acknowledged: boolean;
   lineItems: DraftLineItem[];
@@ -24,6 +30,7 @@ export function getOrderDraft(): OrderDraft | null {
     };
     return {
       requesterName: parsed.requesterName ?? "",
+      requesterEmail: parsed.requesterEmail ?? "",
       departmentName: parsed.departmentName ?? "",
       acknowledged: parsed.acknowledged ?? false,
       lineItems: parsed.lineItems ?? [],
@@ -44,6 +51,7 @@ export function clearOrderDraft() {
 export function createEmptyDraft(): OrderDraft {
   return {
     requesterName: "",
+    requesterEmail: "",
     departmentName: "",
     acknowledged: false,
     lineItems: [],

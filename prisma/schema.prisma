@@ -49,13 +49,15 @@ model PasswordResetToken {
 }
 
 model Order {
-  id              String   @id @default(cuid())
-  requesterName   String
-  departmentName  String
-  acknowledged    Boolean  @default(false)
-  submittedAt     DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                  String    @id @default(cuid())
+  requesterName       String
+  requesterEmail      String    @default("")
+  departmentName      String
+  acknowledged        Boolean   @default(false)
+  reviewSummarySentAt DateTime?
+  submittedAt         DateTime  @default(now())
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   lineItems LineItem[]
 }
@@ -67,6 +69,11 @@ model LineItem {
   amazonUrl       String
   quantity        Int
   justification   String
+  unitPrice       Decimal?       @db.Decimal(10, 2)
+  priceCurrency   String?        @default("USD")
+  isPrimeEligible Boolean?
+  priceFetchedAt  DateTime?
+  priceLookupError String?
   status          LineItemStatus @default(PENDING)
   denialReason    String?
   reviewedById    String?

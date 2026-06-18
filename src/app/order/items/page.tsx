@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { LineItemFormModal } from "@/components/order/line-item-form-modal";
+import { PrimeBadge } from "@/components/order/prime-badge";
 import { OrderProgress } from "@/components/order-progress";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,7 +14,7 @@ import {
   saveOrderDraft,
   type DraftLineItem,
 } from "@/lib/order-draft";
-import { isAmazonUrl } from "@/lib/validators";
+import { cn } from "@/lib/utils";
 
 const emptyItem = (): DraftLineItem => ({
   description: "",
@@ -23,14 +25,23 @@ const emptyItem = (): DraftLineItem => ({
 
 export default function LineItemsPage() {
   const router = useRouter();
-  const [lineItems, setLineItems] = useState<DraftLineItem[]>([emptyItem()]);
+  const [lineItems, setLineItems] = useState<DraftLineItem[]>([]);
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [modalItem, setModalItem] = useState<DraftLineItem>(emptyItem());
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [summary, setSummary] = useState({ name: "", department: "" });
 
   useEffect(() => {
     const draft = getOrderDraft();
-    if (!draft?.requesterName || !draft.departmentName || !draft.acknowledged) {
+    if (
+      !draft?.requesterName ||
+      !draft.requesterEmail ||
+      !draft.departmentName ||
+      !draft.acknowledged
+    ) {
       router.replace("/order");
       return;
     }
@@ -38,45 +49,71 @@ export default function LineItemsPage() {
       name: draft.requesterName,
       department: draft.departmentName,
     });
-    if (draft.lineItems.length > 0) {
-      setLineItems(draft.lineItems);
-    }
+    setLineItems(draft.lineItems);
   }, [router]);
 
-  function updateItem(index: number, field: keyof DraftLineItem, value: string | number) {
-    setLineItems((items) =>
-      items.map((item, i) => (i === index ? { ...item, [field]: value } : item))
-    );
+  function persistLineItems(items: DraftLineItem[]) {
+    const draft = getOrderDraft();
+    if (draft) {
+      saveOrderDraft({ ...draft, lineItems: items });
+    }
   }
 
-  function addItem() {
-    setLineItems((items) => [...items, emptyItem()]);
+  function openAddModal() {
+    setEditingIndex(null);
+    setModalItem(emptyItem());
+    setModalOpen(true);
+  }
+
+  function openEditModal(index: number) {
+    setEditingIndex(index);
+    setModalItem({ ...lineItems[index] });
+    setModalOpen(true);
+  }
+
+  function handleSaveItem(item: DraftLineItem) {
+    const nextItems =
+      editingIndex === null
+        ? [...lineItems, item]
+        : lineItems.map((existing, index) =>
+            index === editingIndex ? item : existing
+          );
+
+    setLineItems(nextItems);
+    persistLineItems(nextItems);
+    setModalOpen(false);
+    setError("");
   }
 
   function removeItem(index: number) {
-    setLineItems((items) => (items.length === 1 ? items : items.filter((_, i) => i !== index)));
+    const nextItems = lineItems.filter((_, i) => i !== index);
+    setLineItems(nextItems);
+    persistLineItems(nextItems);
+    setExpandedItems((current) => {
+      const next = new Set<number>();
+      current.forEach((i) => {
+        if (i < index) next.add(i);
+        else if (i > index) next.add(i - 1);
+      });
+      return next;
+    });
   }
 
-  function validateItems(): string | null {
-    for (let i = 0; i < lineItems.length; i++) {
-      const item = lineItems[i];
-      const label = `Item ${i + 1}`;
-      if (!item.description.trim()) return `${label}: description is required.`;
-      if (!item.amazonUrl.trim()) return `${label}: Amazon URL is required.`;
-      if (!isAmazonUrl(item.amazonUrl.trim())) return `${label}: only Amazon URLs are accepted.`;
-      if (!item.quantity || item.quantity < 1) return `${label}: quantity must be at least 1.`;
-      if (!item.justification.trim()) return `${label}: justification is required.`;
-    }
-    return null;
+  function toggleExpanded(index: number) {
+    setExpandedItems((current) => {
+      const next = new Set(current);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError("");
 
-    const validationError = validateItems();
-    if (validationError) {
-      setError(validationError);
+    if (lineItems.length === 0) {
+      setError("Add at least one item before submitting.");
       return;
     }
 
@@ -92,6 +129,7 @@ export default function LineItemsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           requesterName: draft.requesterName,
+          requesterEmail: draft.requesterEmail,
           departmentName: draft.departmentName,
           acknowledged: true,
           lineItems,
@@ -130,75 +168,129 @@ export default function LineItemsPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {lineItems.map((item, index) => (
-            <div
-              key={index}
-              className="space-y-4 rounded-lg border border-border bg-surface-muted/50 p-4"
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium text-text">Item {index + 1}</h3>
-                {lineItems.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeItem(index)}
-                    className="text-sm text-red-400 hover:text-red-300"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-
-              <div>
-                <label>Item description</label>
-                <input
-                  value={item.description}
-                  onChange={(e) => updateItem(index, "description", e.target.value)}
-                  placeholder="e.g. USB-C hub, 7-port"
-                />
-              </div>
-
-              <div>
-                <label>Amazon URL</label>
-                <input
-                  value={item.amazonUrl}
-                  onChange={(e) => updateItem(index, "amazonUrl", e.target.value)}
-                  placeholder="https://www.amazon.com/dp/..."
-                  type="url"
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label>Quantity</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={999}
-                    value={item.quantity}
-                    onChange={(e) =>
-                      updateItem(index, "quantity", parseInt(e.target.value, 10) || 1)
-                    }
-                  />
-                </div>
-                <div className="sm:col-span-1" />
-              </div>
-
-              <div>
-                <label>Justification</label>
-                <textarea
-                  rows={3}
-                  value={item.justification}
-                  onChange={(e) => updateItem(index, "justification", e.target.value)}
-                  placeholder="Why is this item needed for your work?"
-                />
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {lineItems.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border bg-surface-muted/30 px-4 py-8 text-center">
+              <p className="text-sm text-text-muted">No items added yet.</p>
+              <Button type="button" className="mt-4" onClick={openAddModal}>
+                + Add item
+              </Button>
             </div>
-          ))}
+          ) : (
+            <ul className="space-y-2">
+              {lineItems.map((item, index) => {
+                const expanded = expandedItems.has(index);
+                return (
+                  <li
+                    key={`${item.description}-${index}`}
+                    className="overflow-hidden rounded-lg border border-border bg-surface-muted/40"
+                  >
+                    <div className="flex items-center gap-3 px-3 py-2.5">
+                      <button
+                        type="button"
+                        onClick={() => toggleExpanded(index)}
+                        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                        aria-expanded={expanded}
+                      >
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-brand-600/20 text-xs font-semibold text-brand-400">
+                          {item.quantity}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-text">
+                            {item.description}
+                          </span>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                            <span className="text-xs text-text-muted">
+                              {item.priceDisplay ?? "Price unavailable"}
+                            </span>
+                            <PrimeBadge isPrimeEligible={item.isPrimeEligible} />
+                          </div>
+                        </div>
+                        <svg
+                          className={cn(
+                            "ml-auto h-4 w-4 shrink-0 text-text-muted transition-transform",
+                            expanded && "rotate-180"
+                          )}
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditModal(index)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-400 hover:text-red-300"
+                          onClick={() => removeItem(index)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
 
-          <Button type="button" variant="secondary" onClick={addItem}>
-            + Add another item
-          </Button>
+                    {expanded && (
+                      <div className="space-y-2 border-t border-border px-3 py-3 text-sm">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
+                            Unit price
+                          </p>
+                          <span className="text-text">
+                            {item.priceDisplay ?? "Unavailable"}
+                          </span>
+                          <PrimeBadge isPrimeEligible={item.isPrimeEligible} />
+                        </div>
+                        {item.priceLookupError && (
+                          <p className="text-xs text-amber-400">{item.priceLookupError}</p>
+                        )}
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
+                            Amazon URL
+                          </p>
+                          <a
+                            href={item.amazonUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-0.5 block break-all"
+                          >
+                            {item.amazonUrl}
+                          </a>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
+                            Justification
+                          </p>
+                          <p className="mt-0.5 whitespace-pre-wrap text-text-muted">
+                            {item.justification}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {lineItems.length > 0 && (
+            <Button type="button" variant="secondary" onClick={openAddModal}>
+              + Add item
+            </Button>
+          )}
 
           {error && <p className="text-sm text-red-400">{error}</p>}
 
@@ -208,12 +300,24 @@ export default function LineItemsPage() {
                 Back
               </Button>
             </Link>
-            <Button type="submit" size="lg" disabled={submitting}>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={submitting || lineItems.length === 0}
+            >
               {submitting ? "Submitting..." : "Submit order request"}
             </Button>
           </div>
         </form>
       </Card>
+
+      <LineItemFormModal
+        open={modalOpen}
+        title={editingIndex === null ? "Add item" : "Edit item"}
+        initialItem={modalItem}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSaveItem}
+      />
     </div>
   );
 }

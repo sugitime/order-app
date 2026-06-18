@@ -2,14 +2,19 @@ import { NextResponse } from "next/server";
 import {
   getAppSettings,
   mergeAmazonConfig,
+  mergeDisclaimerConfigSettings,
+  mergeEmailTemplatesConfig,
   mergeGmailConfig,
   mergeNotificationConfig,
   maskSecret,
   saveAppSettings,
+  settingsForClient,
 } from "@/lib/config";
 import { requireAdmin } from "@/lib/auth";
 import {
   amazonConfigSchema,
+  disclaimerConfigSchema,
+  emailTemplatesSchema,
   gmailConfigSchema,
   notificationConfigSchema,
 } from "@/lib/validators";
@@ -19,6 +24,8 @@ const settingsSchema = z.object({
   gmail: gmailConfigSchema.partial().optional(),
   amazon: amazonConfigSchema.partial().optional(),
   notifications: notificationConfigSchema.partial().optional(),
+  emailTemplates: emailTemplatesSchema.partial().optional(),
+  disclaimer: disclaimerConfigSchema.partial().optional(),
 });
 
 export async function GET() {
@@ -28,15 +35,11 @@ export async function GET() {
 
     return NextResponse.json({
       settings: {
-        gmail: {
-          ...settings.gmail,
-          password: maskSecret(settings.gmail.password),
-        },
+        ...settingsForClient(settings),
         amazon: {
           ...settings.amazon,
           secretAccessKey: maskSecret(settings.amazon.secretAccessKey),
         },
-        notifications: settings.notifications,
       },
     });
   } catch {
@@ -68,18 +71,23 @@ export async function PUT(request: Request) {
       notifications: parsed.data.notifications
         ? mergeNotificationConfig(current.notifications, parsed.data.notifications)
         : current.notifications,
+      emailTemplates: parsed.data.emailTemplates
+        ? mergeEmailTemplatesConfig(current.emailTemplates, parsed.data.emailTemplates)
+        : current.emailTemplates,
+      disclaimer: parsed.data.disclaimer
+        ? mergeDisclaimerConfigSettings(current.disclaimer, parsed.data.disclaimer)
+        : current.disclaimer,
     };
 
     await saveAppSettings(updated);
 
     return NextResponse.json({
       settings: {
-        gmail: { ...updated.gmail, password: maskSecret(updated.gmail.password) },
+        ...settingsForClient(updated),
         amazon: {
           ...updated.amazon,
           secretAccessKey: maskSecret(updated.amazon.secretAccessKey),
         },
-        notifications: updated.notifications,
       },
     });
   } catch (error) {

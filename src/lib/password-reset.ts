@@ -1,5 +1,7 @@
 import { createHash, randomBytes } from "crypto";
 import { hashPassword } from "@/lib/auth";
+import { getAppSettings } from "@/lib/config";
+import { renderEmailTemplate } from "@/lib/email-templates";
 import { sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
@@ -42,17 +44,17 @@ export async function requestPasswordReset(email: string) {
 
   const resetUrl = `${getAppBaseUrl()}/admin/reset-password?token=${rawToken}`;
 
+  const settings = await getAppSettings();
+  const rendered = renderEmailTemplate(settings.emailTemplates.passwordReset, {
+    userName: user.name,
+    resetUrl,
+  });
+
   const result = await sendEmail({
     to: user.email,
-    subject: "QM Order System — Reset your password",
-    text: [
-      `Hi ${user.name},`,
-      "",
-      "We received a request to reset your password.",
-      `Reset your password: ${resetUrl}`,
-      "",
-      "This link expires in 1 hour. If you did not request this, you can ignore this email.",
-    ].join("\n"),
+    subject: rendered.subject,
+    text: rendered.text,
+    html: rendered.html,
   });
 
   return { sent: result.sent, reason: result.sent ? undefined : "email_not_configured" };

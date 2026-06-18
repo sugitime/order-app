@@ -14,12 +14,14 @@ import {
 export default function OrderStepOnePage() {
   const router = useRouter();
   const [requesterName, setRequesterName] = useState("");
+  const [requesterEmail, setRequesterEmail] = useState("");
   const [departmentName, setDepartmentName] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     const draft = getOrderDraft() ?? createEmptyDraft();
     setRequesterName(draft.requesterName);
+    setRequesterEmail(draft.requesterEmail);
     setDepartmentName(draft.departmentName);
   }, []);
 
@@ -31,6 +33,14 @@ export default function OrderStepOnePage() {
       setError("Please enter your name.");
       return;
     }
+    if (!requesterEmail.trim()) {
+      setError("Please enter your email address.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(requesterEmail.trim())) {
+      setError("Please enter a valid email address.");
+      return;
+    }
     if (!departmentName.trim()) {
       setError("Please enter your department.");
       return;
@@ -40,6 +50,7 @@ export default function OrderStepOnePage() {
     saveOrderDraft({
       ...draft,
       requesterName: requesterName.trim(),
+      requesterEmail: requesterEmail.trim().toLowerCase(),
       departmentName: departmentName.trim(),
     });
     router.push("/order/disclaimer");
@@ -67,12 +78,24 @@ export default function OrderStepOnePage() {
           </div>
 
           <div>
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={requesterEmail}
+              onChange={(e) => setRequesterEmail(e.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+          </div>
+
+          <div>
             <label htmlFor="department">Department</label>
             <input
               id="department"
               value={departmentName}
               onChange={(e) => setDepartmentName(e.target.value)}
-              placeholder="e.g. Engineering, Marketing, Quality Management"
+              placeholder="E.g. Vendors, Exhibitors, Villages, etc."
               autoComplete="organization"
             />
           </div>

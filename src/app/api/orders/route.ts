@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import { lookupAmazonProduct } from "@/lib/amazon-product";
 import { prisma } from "@/lib/prisma";
-import { sendSubmissionNotification } from "@/lib/order-flow";
+import {
+  sendSubmissionConfirmationToRequester,
+  sendSubmissionNotification,
+} from "@/lib/order-flow";
 import { orderSubmitSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
@@ -15,26 +19,42 @@ export async function POST(request: Request) {
       );
     }
 
-    const { requesterName, departmentName, acknowledged, lineItems } = parsed.data;
+    const { requesterName, requesterEmail, departmentName, acknowledged, lineItems } =
+      parsed.data;
+    const enrichedItems = await Promise.all(
+      lineItems.map(async (item) => {
+        const lookup = await lookupAmazonProduct(item.amazonUrl);
+        return {
+          description: lookup.title?.trim() || item.description.trim(),
+          amazonUrl: item.amazonUrl,
+          quantity: item.quantity,
+          justification: item.justification,
+          unitPrice: lookup.unitPrice,
+          priceCurrency: lookup.priceCurrency,
+          isPrimeEligible: lookup.isPrimeEligible,
+          priceFetchedAt: new Date(),
+          priceLookupError: lookup.error ?? null,
+        };
+      })
+    );
 
     const order = await prisma.order.create({
       data: {
         requesterName,
+        requesterEmail: requesterEmail.trim().toLowerCase(),
         departmentName: departmentName.trim(),
         acknowledged,
         lineItems: {
-          create: lineItems.map((item) => ({
-            description: item.description,
-            amazonUrl: item.amazonUrl,
-            quantity: item.quantity,
-            justification: item.justification,
-          })),
+          create: enrichedItems,
         },
       },
       include: { lineItems: true },
     });
 
-    await sendSubmissionNotification(order.id);
+    await Promise.all([
+      sendSubmissionNotification(order.id),
+      sendSubmissionConfirmationToRequester(order.id),
+    ]);
 
     return NextResponse.json({ orderId: order.id }, { status: 201 });
   } catch (error) {

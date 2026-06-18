@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import { SettingsForm } from "@/components/admin/settings-form";
-import { getAppSettings, maskSecret } from "@/lib/config";
+import { getAppSettings, maskSecret, settingsForClient } from "@/lib/config";
 import { getSessionUser } from "@/lib/auth";
 
 export default async function AdminSettingsPage() {
@@ -14,15 +14,11 @@ export default async function AdminSettingsPage() {
   const settings = await getAppSettings();
 
   const maskedSettings = {
-    gmail: {
-      ...settings.gmail,
-      password: maskSecret(settings.gmail.password),
-    },
+    ...settingsForClient(settings),
     amazon: {
       ...settings.amazon,
       secretAccessKey: maskSecret(settings.amazon.secretAccessKey),
     },
-    notifications: settings.notifications,
   };
 
   return (
@@ -30,7 +26,7 @@ export default async function AdminSettingsPage() {
       <div>
         <h1 className="text-2xl font-semibold text-text">Settings</h1>
         <p className="mt-1 text-sm text-text-muted">
-          Configure Gmail for notifications and Amazon API credentials for auto-ordering.
+          Configure SMTP, order disclaimer, email templates, notifications, and Amazon API credentials.
         </p>
       </div>
       <SettingsForm initialSettings={maskedSettings} />

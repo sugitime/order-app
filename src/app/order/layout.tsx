@@ -7,7 +7,7 @@ export default function OrderLayout({ children }: { children: React.ReactNode })
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-brand-400">
-              Quality Management
+              QM
             </p>
             <h1 className="text-lg font-semibold text-text">Order Request</h1>
           </div>

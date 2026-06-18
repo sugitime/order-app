@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { ProcessAllButton } from "@/components/admin/process-all-button";
 import { QueueItemActions } from "@/components/admin/queue-actions";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { PrimeBadge } from "@/components/order/prime-badge";
+import { formatCurrency } from "@/lib/amazon-product";
 import { formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 
@@ -63,7 +65,23 @@ export default async function OrderQueuePage() {
                 <tr key={item.id} className="align-top">
                   <td className="px-4 py-4">
                     <p className="font-medium text-text">{item.description}</p>
-                    <p className="mt-1 text-xs text-text-muted">Qty {item.quantity}</p>
+                    <p className="mt-1 text-xs text-text-muted">
+                      Qty {item.quantity}
+                      {item.unitPrice != null && (
+                        <>
+                          {" "}
+                          ·{" "}
+                          {formatCurrency(
+                            Number(item.unitPrice),
+                            item.priceCurrency ?? "USD"
+                          )}{" "}
+                          each
+                        </>
+                      )}
+                    </p>
+                    <div className="mt-1">
+                      <PrimeBadge isPrimeEligible={item.isPrimeEligible} />
+                    </div>
                     <a
                       href={item.amazonUrl}
                       target="_blank"

@@ -1,5 +1,14 @@
+import { DEFAULT_DISCLAIMER, mergeDisclaimerConfig } from "@/lib/disclaimer";
+import { DEFAULT_EMAIL_TEMPLATES, mergeEmailTemplates } from "@/lib/email-templates";
 import { prisma } from "@/lib/prisma";
-import type { AmazonConfig, AppSettings, GmailConfig, NotificationConfig } from "@/types/config";
+import type {
+  AmazonConfig,
+  AppSettings,
+  DisclaimerConfig,
+  EmailTemplatesConfig,
+  GmailConfig,
+  NotificationConfig,
+} from "@/types/config";
 
 const DEFAULT_SETTINGS: AppSettings = {
   gmail: {
@@ -27,6 +36,8 @@ const DEFAULT_SETTINGS: AppSettings = {
     notifyOnOrder: true,
     adminEmail: "",
   },
+  emailTemplates: DEFAULT_EMAIL_TEMPLATES,
+  disclaimer: DEFAULT_DISCLAIMER,
 };
 
 export async function getAppSettings(): Promise<AppSettings> {
@@ -40,6 +51,14 @@ export async function getAppSettings(): Promise<AppSettings> {
     gmail: { ...DEFAULT_SETTINGS.gmail, ...stored.gmail },
     amazon: { ...DEFAULT_SETTINGS.amazon, ...stored.amazon },
     notifications: { ...DEFAULT_SETTINGS.notifications, ...stored.notifications },
+    emailTemplates: mergeEmailTemplates(
+      DEFAULT_SETTINGS.emailTemplates,
+      stored.emailTemplates ?? {}
+    ),
+    disclaimer: mergeDisclaimerConfig(
+      DEFAULT_SETTINGS.disclaimer,
+      stored.disclaimer ?? {}
+    ),
   };
 }
 
@@ -55,6 +74,14 @@ export function maskSecret(value: string) {
   if (!value) return "";
   if (value.length <= 4) return "****";
   return `${"*".repeat(Math.min(value.length - 4, 12))}${value.slice(-4)}`;
+}
+
+export function settingsForClient(settings: AppSettings): AppSettings {
+  const { password: _password, ...gmailWithoutPassword } = settings.gmail;
+  return {
+    ...settings,
+    gmail: { ...gmailWithoutPassword, password: "" },
+  };
 }
 
 export function mergeGmailConfig(
@@ -86,4 +113,18 @@ export function mergeNotificationConfig(
   incoming: Partial<NotificationConfig>
 ): NotificationConfig {
   return { ...current, ...incoming };
+}
+
+export function mergeEmailTemplatesConfig(
+  current: EmailTemplatesConfig,
+  incoming: Partial<EmailTemplatesConfig>
+): EmailTemplatesConfig {
+  return mergeEmailTemplates(current, incoming);
+}
+
+export function mergeDisclaimerConfigSettings(
+  current: DisclaimerConfig,
+  incoming: Partial<DisclaimerConfig>
+): DisclaimerConfig {
+  return mergeDisclaimerConfig(current, incoming);
 }

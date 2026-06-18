@@ -1,6 +1,6 @@
 # QM Order App
 
-Multi-department Amazon order request system for Quality Management (QM).
+Multi-department Amazon order request system for Quarter Master (QM).
 
 ## Features
 

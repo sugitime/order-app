@@ -26,8 +26,33 @@ export type NotificationConfig = {
   adminEmail: string;
 };
 
+export type EmailTemplateKey =
+  | "orderSubmitted"
+  | "orderSubmissionConfirmation"
+  | "orderReviewComplete"
+  | "lineItemApproved"
+  | "lineItemDenied"
+  | "orderPlaced"
+  | "passwordReset"
+  | "testEmail";
+
+export type EmailTemplate = {
+  subject: string;
+  bodyHtml: string;
+};
+
+export type EmailTemplatesConfig = Record<EmailTemplateKey, EmailTemplate>;
+
+export type DisclaimerConfig = {
+  title: string;
+  bodyHtml: string;
+  acknowledgmentText: string;
+};
+
 export type AppSettings = {
   gmail: GmailConfig;
   amazon: AmazonConfig;
   notifications: NotificationConfig;
+  emailTemplates: EmailTemplatesConfig;
+  disclaimer: DisclaimerConfig;
 };
