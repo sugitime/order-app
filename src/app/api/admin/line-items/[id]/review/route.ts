@@ -87,6 +87,13 @@ export async function POST(
 
     if (parsed.data.action === "approve") {
       await queueApprovedItems([id]);
+      await logOrderActivity({
+        orderId: updated.orderId,
+        lineItemId: id,
+        action: OrderActivityAction.LINE_ITEM_QUEUED,
+        performedById: user.id,
+        details: `${item.description} (qty ${item.quantity})`,
+      });
     }
 
     await sendReviewNotification(id, parsed.data.action === "approve" ? "approved" : "denied");

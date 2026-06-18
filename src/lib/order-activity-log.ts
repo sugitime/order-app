@@ -1,12 +1,15 @@
 import { OrderActivityAction } from "@prisma/client";
-import { formatActivityAction } from "@/lib/order-activity-log-format";
+import {
+  formatActivityAction,
+  formatActivityPerformer,
+} from "@/lib/order-activity-log-format";
 import { prisma } from "@/lib/prisma";
 
 type LogOrderActivityInput = {
   orderId: string;
   lineItemId?: string;
   action: OrderActivityAction;
-  performedById: string;
+  performedById?: string;
   details?: string;
 };
 
@@ -16,7 +19,7 @@ export async function logOrderActivity(input: LogOrderActivityInput) {
       orderId: input.orderId,
       lineItemId: input.lineItemId,
       action: input.action,
-      performedById: input.performedById,
+      performedById: input.performedById ?? null,
       details: input.details?.trim() || null,
     },
     include: {
@@ -24,10 +27,11 @@ export async function logOrderActivity(input: LogOrderActivityInput) {
     },
   });
 
+  const performer = formatActivityPerformer(log.performedBy?.name);
   const actionLabel = formatActivityAction(log.action);
   const detailsSuffix = log.details ? ` — ${log.details}` : "";
   console.info(
-    `[order-activity] ${log.performedBy.name} ${actionLabel} on order ${log.orderId}${detailsSuffix}`
+    `[order-activity] ${performer} ${actionLabel} on order ${log.orderId}${detailsSuffix}`
   );
 
   return log;

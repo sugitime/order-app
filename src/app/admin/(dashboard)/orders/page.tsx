@@ -49,7 +49,7 @@ export default async function AdminOrdersPage() {
       action: log.action,
       details: log.details,
       createdAt: log.createdAt.toISOString(),
-      performedByName: log.performedBy.name,
+      performedByName: log.performedBy?.name ?? null,
     })),
   }));
 

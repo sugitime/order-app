@@ -1,6 +1,7 @@
 "use client";
 
 import type { LineItemStatus, OrderActivityAction } from "@prisma/client";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { LineItemActions } from "@/components/admin/line-item-actions";
@@ -33,7 +34,7 @@ export type AdminOrderActivityLog = {
   action: OrderActivityAction;
   details: string | null;
   createdAt: string;
-  performedByName: string;
+  performedByName: string | null;
 };
 
 export type AdminOrder = {
@@ -186,7 +187,15 @@ export function OrdersList({ orders }: { orders: AdminOrder[] }) {
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <p className="font-mono text-[11px] text-text-muted">{order.id}</p>
+                  <div className="text-right">
+                    <p className="font-mono text-[11px] text-text-muted">{order.id}</p>
+                    <Link
+                      href={`/admin/log?orderId=${encodeURIComponent(order.id)}`}
+                      className="text-[11px] text-brand-400 hover:underline"
+                    >
+                      View log
+                    </Link>
+                  </div>
                   <div className="flex flex-col items-end gap-2">
                     <OrderDenyActions orderId={order.id} pendingCount={orderPendingCount} />
                     <OrderDeleteButton orderId={order.id} />

@@ -50,8 +50,13 @@ model PasswordResetToken {
 }
 
 enum OrderActivityAction {
+  ORDER_SUBMITTED
   LINE_ITEM_APPROVED
   LINE_ITEM_DENIED
+  LINE_ITEM_QUEUED
+  LINE_ITEM_ORDERED
+  LINE_ITEM_ORDER_FAILED
+  LINE_ITEM_MANUAL_COMPLETE
   ORDER_DENIED
   ORDER_DELETED
 }
@@ -77,13 +82,13 @@ model OrderActivityLog {
   orderId       String
   lineItemId    String?
   action        OrderActivityAction
-  performedById String
+  performedById String?
   details       String?
   createdAt     DateTime            @default(now())
 
   order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   lineItem    LineItem? @relation(fields: [lineItemId], references: [id], onDelete: SetNull)
-  performedBy User      @relation(fields: [performedById], references: [id])
+  performedBy User?     @relation(fields: [performedById], references: [id])
 
   @@index([orderId])
   @@index([createdAt])

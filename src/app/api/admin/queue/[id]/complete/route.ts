@@ -1,6 +1,9 @@
+import { OrderActivityAction } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { logOrderActivity } from "@/lib/order-activity-log";
 import { manuallyCompleteOrder } from "@/lib/order-flow";
+import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const completeSchema = z.object({
@@ -27,11 +30,30 @@ export async function POST(
       return NextResponse.json({ error: "Amazon order ID is required" }, { status: 400 });
     }
 
+    const existing = await prisma.lineItem.findUnique({
+      where: { id },
+      select: { id: true, orderId: true, description: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Line item not found" }, { status: 404 });
+    }
+
     const item = await manuallyCompleteOrder(
       id,
       parsed.data.amazonOrderId,
       parsed.data.trackingNumber
     );
+
+    await logOrderActivity({
+      orderId: existing.orderId,
+      lineItemId: existing.id,
+      action: OrderActivityAction.LINE_ITEM_MANUAL_COMPLETE,
+      performedById: user.id,
+      details: `${existing.description} — Amazon order ${parsed.data.amazonOrderId}${
+        parsed.data.trackingNumber ? `, tracking ${parsed.data.trackingNumber}` : ""
+      }`,
+    });
 
     return NextResponse.json({ lineItem: item });
   } catch (error) {

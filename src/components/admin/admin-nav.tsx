@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/admin/orders", label: "Orders", adminOnly: false },
   { href: "/admin/queue", label: "Order Queue", adminOnly: false },
+  { href: "/admin/log", label: "Log", adminOnly: false },
   { href: "/admin/users", label: "Users", adminOnly: true },
   { href: "/admin/settings", label: "Settings", adminOnly: true },
   { href: "/admin/account", label: "Account", adminOnly: false },
@@ -28,6 +29,10 @@ export function AdminNav() {
     (link) => !link.adminOnly || role === "ADMIN"
   );
 
+  function isNavActive(href: string) {
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
+
   return (
     <nav className="flex flex-wrap gap-2">
       {visibleLinks.map((link) => (
@@ -36,7 +41,7 @@ export function AdminNav() {
           href={link.href}
           className={cn(
             "rounded-lg px-3 py-2 text-sm font-medium transition",
-            pathname.startsWith(link.href)
+            isNavActive(link.href)
               ? "bg-brand-600 text-white"
               : "text-text-muted hover:bg-surface-muted hover:text-text"
           )}

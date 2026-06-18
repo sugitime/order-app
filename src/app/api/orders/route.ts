@@ -1,5 +1,7 @@
+import { OrderActivityAction } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { lookupAmazonProduct } from "@/lib/amazon-product";
+import { logOrderActivity } from "@/lib/order-activity-log";
 import { prisma } from "@/lib/prisma";
 import {
   sendSubmissionConfirmationToRequester,
@@ -49,6 +51,12 @@ export async function POST(request: Request) {
         },
       },
       include: { lineItems: true },
+    });
+
+    await logOrderActivity({
+      orderId: order.id,
+      action: OrderActivityAction.ORDER_SUBMITTED,
+      details: `${order.lineItems.length} item(s) from ${requesterName} (${departmentName.trim()})`,
     });
 
     await Promise.all([
