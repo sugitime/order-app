@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { ExportOrderedItemsButton } from "@/components/admin/export-ordered-items-button";
 import { OrdersList, type AdminOrder } from "@/components/admin/orders-list";
 import { prisma } from "@/lib/prisma";
 
@@ -55,8 +56,9 @@ export default async function AdminOrdersPage() {
 
   return (
     <div className="space-y-4">
-      <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-text">Orders</h1>
+        <ExportOrderedItemsButton />
       </div>
       <OrdersList orders={serializedOrders} />
     </div>

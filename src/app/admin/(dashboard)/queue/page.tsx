@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { LineItemStatus } from "@prisma/client";
 import { Card } from "@/components/ui/card";
+import { ExportOrderedItemsButton } from "@/components/admin/export-ordered-items-button";
 import { ProcessAllButton } from "@/components/admin/process-all-button";
 import { QueueItemActions } from "@/components/admin/queue-actions";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -41,7 +42,10 @@ export default async function OrderQueuePage() {
             credentials; you can also enter order details manually.
           </p>
         </div>
-        <ProcessAllButton count={pendingCount} />
+        <div className="flex flex-wrap items-center gap-2">
+          <ExportOrderedItemsButton />
+          <ProcessAllButton count={pendingCount} />
+        </div>
       </div>
 
       {items.length === 0 ? (
