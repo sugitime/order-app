@@ -24,7 +24,7 @@ export default async function ActivityLogPage({
     orderBy: { createdAt: "desc" },
     take: 500,
     include: {
-      performedBy: { select: { name: true } },
+      performedBy: { select: { name: true, email: true } },
       order: {
         select: {
           requesterName: true,
@@ -41,6 +41,7 @@ export default async function ActivityLogPage({
     details: log.details,
     createdAt: log.createdAt.toISOString(),
     performedByName: log.performedBy?.name ?? null,
+    performedByEmail: log.performedBy?.email ?? null,
     requesterName: log.order.requesterName,
     orderDeleted: log.order.deletedAt != null,
   }));

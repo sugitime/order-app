@@ -29,6 +29,21 @@ export function formatActivityPerformer(performerName: string | null | undefined
   return performerName?.trim() || "System";
 }
 
+export function resolveLogPerformer(input: {
+  action: OrderActivityAction;
+  performedByName: string | null | undefined;
+  requesterName: string;
+}): string {
+  if (input.action === "ORDER_SUBMITTED") {
+    return input.requesterName.trim() || "Requester";
+  }
+  return formatActivityPerformer(input.performedByName);
+}
+
+export function formatActivityDetails(details: string | null): string {
+  return details?.trim() || "—";
+}
+
 export function formatActivityMessage(
   action: OrderActivityAction,
   performerName: string | null | undefined,

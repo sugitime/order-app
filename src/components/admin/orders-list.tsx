@@ -10,7 +10,11 @@ import { OrderDenyActions } from "@/components/admin/order-deny-actions";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { PrimeBadge } from "@/components/order/prime-badge";
 import { formatCurrency } from "@/lib/amazon-product";
-import { formatActivityMessage } from "@/lib/order-activity-log-format";
+import {
+  formatActivityActionLabel,
+  formatActivityDetails,
+  resolveLogPerformer,
+} from "@/lib/order-activity-log-format";
 import { formatDate } from "@/lib/utils";
 
 export type AdminOrderItem = {
@@ -272,8 +276,17 @@ export function OrdersList({ orders }: { orders: AdminOrder[] }) {
                   <ul className="space-y-1">
                     {order.activityLogs.map((log) => (
                       <li key={log.id} className="text-xs text-text-muted">
+                        <span className="font-medium text-text">
+                          {resolveLogPerformer({
+                            action: log.action,
+                            performedByName: log.performedByName,
+                            requesterName: order.requesterName,
+                          })}
+                        </span>
                         <span className="text-text">
-                          {formatActivityMessage(log.action, log.performedByName, log.details)}
+                          {" "}
+                          · {formatActivityActionLabel(log.action).toLowerCase()}
+                          {log.details ? ` — ${formatActivityDetails(log.details)}` : ""}
                         </span>
                         <span className="ml-1">· {formatDate(log.createdAt)}</span>
                       </li>

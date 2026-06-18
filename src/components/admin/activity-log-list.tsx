@@ -7,7 +7,8 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import {
   formatActivityActionLabel,
-  formatActivityMessage,
+  formatActivityDetails,
+  resolveLogPerformer,
 } from "@/lib/order-activity-log-format";
 import { formatDate } from "@/lib/utils";
 
@@ -18,6 +19,7 @@ export type ActivityLogEntry = {
   details: string | null;
   createdAt: string;
   performedByName: string | null;
+  performedByEmail: string | null;
   requesterName: string;
   orderDeleted: boolean;
 };
@@ -102,41 +104,57 @@ export function ActivityLogList({
               <thead className="bg-surface-muted">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium text-text-muted">When</th>
-                  <th className="px-4 py-3 text-left font-medium text-text-muted">Order</th>
+                  <th className="px-4 py-3 text-left font-medium text-text-muted">Who</th>
                   <th className="px-4 py-3 text-left font-medium text-text-muted">Action</th>
+                  <th className="px-4 py-3 text-left font-medium text-text-muted">Order</th>
                   <th className="px-4 py-3 text-left font-medium text-text-muted">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {logs.map((log) => (
-                  <tr key={log.id} className="align-top">
-                    <td className="whitespace-nowrap px-4 py-3 text-text-muted">
-                      {formatDate(log.createdAt)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/log?orderId=${encodeURIComponent(log.orderId)}`}
-                        className="font-mono text-xs text-brand-400 hover:underline"
-                      >
-                        {log.orderId}
-                      </Link>
-                      <p className="mt-0.5 text-xs text-text-muted">
-                        {log.requesterName}
-                        {log.orderDeleted && (
-                          <span className="ml-1 text-amber-400">(deleted)</span>
+                {logs.map((log) => {
+                  const who = resolveLogPerformer(log);
+                  const showEmail =
+                    log.action !== "ORDER_SUBMITTED" && log.performedByEmail;
+
+                  return (
+                    <tr key={log.id} className="align-top">
+                      <td className="whitespace-nowrap px-4 py-3 text-text-muted">
+                        {formatDate(log.createdAt)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-text">{who}</p>
+                        {showEmail && (
+                          <p className="text-xs text-text-muted">{log.performedByEmail}</p>
                         )}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-text">
-                        {formatActivityActionLabel(log.action)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-text">
-                      {formatActivityMessage(log.action, log.performedByName, log.details)}
-                    </td>
-                  </tr>
-                ))}
+                        {log.action === "ORDER_SUBMITTED" && (
+                          <p className="text-xs text-text-muted">Requester</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-text">
+                          {formatActivityActionLabel(log.action)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/admin/log?orderId=${encodeURIComponent(log.orderId)}`}
+                          className="font-mono text-xs text-brand-400 hover:underline"
+                        >
+                          {log.orderId}
+                        </Link>
+                        <p className="mt-0.5 text-xs text-text-muted">
+                          {log.requesterName}
+                          {log.orderDeleted && (
+                            <span className="ml-1 text-amber-400">(deleted)</span>
+                          )}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3 text-text-muted">
+                        {formatActivityDetails(log.details)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
