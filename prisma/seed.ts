@@ -12,6 +12,7 @@ async function main() {
     where: { email: adminEmail },
     update: {
       name: "Kevin",
+      passwordHash,
       role: UserRole.ADMIN,
     },
     create: {
