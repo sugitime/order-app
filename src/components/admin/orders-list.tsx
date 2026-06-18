@@ -15,6 +15,11 @@ import {
   formatActivityDetails,
   resolveLogPerformer,
 } from "@/lib/order-activity-log-format";
+import {
+  orderAwaitingDecision,
+  orderFullyDecided,
+  orderFullyFulfilled,
+} from "@/lib/order-status";
 import { formatDate } from "@/lib/utils";
 
 export type AdminOrderItem = {
@@ -51,30 +56,36 @@ export type AdminOrder = {
   activityLogs: AdminOrderActivityLog[];
 };
 
-type OrderTab = "awaiting" | "decided";
-
-function orderAwaitingDecision(order: AdminOrder): boolean {
-  return order.lineItems.some((item) => item.status === "PENDING");
-}
-
-function orderFullyDecided(order: AdminOrder): boolean {
-  return (
-    order.lineItems.length > 0 &&
-    order.lineItems.every((item) => item.status !== "PENDING")
-  );
-}
+type OrderTab = "awaiting" | "decided" | "fulfilled";
 
 export function OrdersList({ orders }: { orders: AdminOrder[] }) {
   const [tab, setTab] = useState<OrderTab>("awaiting");
   const [query, setQuery] = useState("");
 
   const awaitingOrders = useMemo(
-    () => orders.filter(orderAwaitingDecision),
+    () => orders.filter((order) => orderAwaitingDecision(order.lineItems)),
     [orders]
   );
-  const decidedOrders = useMemo(() => orders.filter(orderFullyDecided), [orders]);
+  const fulfilledOrders = useMemo(
+    () => orders.filter((order) => orderFullyFulfilled(order.lineItems)),
+    [orders]
+  );
+  const decidedOrders = useMemo(
+    () =>
+      orders.filter(
+        (order) =>
+          orderFullyDecided(order.lineItems) &&
+          !orderFullyFulfilled(order.lineItems)
+      ),
+    [orders]
+  );
 
-  const tabOrders = tab === "awaiting" ? awaitingOrders : decidedOrders;
+  const tabOrders =
+    tab === "awaiting"
+      ? awaitingOrders
+      : tab === "fulfilled"
+        ? fulfilledOrders
+        : decidedOrders;
 
   const filteredOrders = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
@@ -95,7 +106,9 @@ export function OrdersList({ orders }: { orders: AdminOrder[] }) {
         ? "No orders match that reference ID."
         : tab === "awaiting"
           ? "No orders awaiting decision."
-          : "No fully decided orders yet.";
+          : tab === "fulfilled"
+            ? "No fulfilled orders yet."
+            : "No fully decided orders yet.";
 
   return (
     <div className="space-y-4">
@@ -140,6 +153,24 @@ export function OrdersList({ orders }: { orders: AdminOrder[] }) {
             </span>
           )}
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "fulfilled"}
+          onClick={() => setTab("fulfilled")}
+          className={`rounded-t-lg px-4 py-2 text-sm font-medium transition ${
+            tab === "fulfilled"
+              ? "border border-b-0 border-border bg-surface-raised text-text"
+              : "text-text-muted hover:bg-surface-muted hover:text-text"
+          }`}
+        >
+          Fulfilled
+          {fulfilledOrders.length > 0 && (
+            <span className="ml-1.5 rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-xs text-emerald-400">
+              {fulfilledOrders.length}
+            </span>
+          )}
+        </button>
       </div>
 
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -153,8 +184,10 @@ export function OrdersList({ orders }: { orders: AdminOrder[] }) {
                 </span>
               )}
             </>
+          ) : tab === "fulfilled" ? (
+            "Orders where every line item has been ordered on Amazon. Delete to archive completed orders."
           ) : (
-            "Orders where every line item has been approved or denied."
+            "Orders where every line item has been approved or denied, but not yet fully ordered."
           )}
         </p>
         <div className="w-full max-w-xs">

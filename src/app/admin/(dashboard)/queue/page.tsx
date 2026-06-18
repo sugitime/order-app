@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { LineItemStatus } from "@prisma/client";
 import { Card } from "@/components/ui/card";
 import { ExportOrderedItemsButton } from "@/components/admin/export-ordered-items-button";
+import { FulfilledQueueList } from "@/components/admin/fulfilled-queue-list";
 import { ProcessAllButton } from "@/components/admin/process-all-button";
 import { QueueItemActions } from "@/components/admin/queue-actions";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -28,18 +29,21 @@ export default async function OrderQueuePage() {
     include: { order: true },
   });
 
-  const pendingCount = items.filter(
+  const activeItems = items.filter((item) => item.status !== LineItemStatus.ORDERED);
+  const fulfilledItems = items.filter((item) => item.status === LineItemStatus.ORDERED);
+
+  const pendingCount = activeItems.filter(
     (item) => item.status === "QUEUED" || item.status === "FAILED"
   ).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-        <h1 className="text-2xl font-semibold text-text">Order Queue</h1>
-        <p className="mt-1 text-sm text-text-muted">
-            Approved items ready for Amazon ordering. Auto-order uses configured API
-            credentials; you can also enter order details manually.
+          <h1 className="text-2xl font-semibold text-text">Order Queue</h1>
+          <p className="mt-1 text-sm text-text-muted">
+            Approved items ready for Amazon ordering. Auto-order uses configured API credentials;
+            you can also enter order details manually.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -48,9 +52,9 @@ export default async function OrderQueuePage() {
         </div>
       </div>
 
-      {items.length === 0 ? (
+      {activeItems.length === 0 ? (
         <Card>
-          <p className="text-center text-text-muted">No items in the queue.</p>
+          <p className="text-center text-text-muted">No items awaiting Amazon ordering.</p>
         </Card>
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-surface-raised shadow-lg shadow-black/20">
@@ -66,7 +70,7 @@ export default async function OrderQueuePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {items.map((item) => (
+              {activeItems.map((item) => (
                 <tr key={item.id} className="align-top">
                   <td className="px-4 py-4">
                     <p className="font-medium text-text">{item.description}</p>
@@ -126,6 +130,8 @@ export default async function OrderQueuePage() {
           </table>
         </div>
       )}
+
+      <FulfilledQueueList items={fulfilledItems} />
     </div>
   );
 }
