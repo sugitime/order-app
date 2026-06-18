@@ -1,6 +1,7 @@
-import { LineItemStatus } from "@prisma/client";
+import { LineItemStatus, OrderActivityAction } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { logOrderActivity } from "@/lib/order-activity-log";
 import { maybeSendOrderReviewSummary, sendReviewNotification } from "@/lib/order-flow";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
@@ -40,6 +41,10 @@ export async function POST(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    if (order.deletedAt) {
+      return NextResponse.json({ error: "Order has been deleted" }, { status: 400 });
+    }
+
     const pendingItems = order.lineItems.filter(
       (item) => item.status === LineItemStatus.PENDING
     );
@@ -65,6 +70,13 @@ export async function POST(
         reviewedById: user.id,
         reviewedAt: now,
       },
+    });
+
+    await logOrderActivity({
+      orderId,
+      action: OrderActivityAction.ORDER_DENIED,
+      performedById: user.id,
+      details: `Denied ${pendingItems.length} pending item(s) — ${reason}`,
     });
 
     for (const item of pendingItems) {

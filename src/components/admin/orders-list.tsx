@@ -1,13 +1,15 @@
 "use client";
 
-import type { LineItemStatus } from "@prisma/client";
+import type { LineItemStatus, OrderActivityAction } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { LineItemActions } from "@/components/admin/line-item-actions";
+import { OrderDeleteButton } from "@/components/admin/order-delete-button";
 import { OrderDenyActions } from "@/components/admin/order-deny-actions";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { PrimeBadge } from "@/components/order/prime-badge";
 import { formatCurrency } from "@/lib/amazon-product";
+import { formatActivityMessage } from "@/lib/order-activity-log-format";
 import { formatDate } from "@/lib/utils";
 
 export type AdminOrderItem = {
@@ -26,6 +28,14 @@ export type AdminOrderItem = {
   reviewedByName: string | null;
 };
 
+export type AdminOrderActivityLog = {
+  id: string;
+  action: OrderActivityAction;
+  details: string | null;
+  createdAt: string;
+  performedByName: string;
+};
+
 export type AdminOrder = {
   id: string;
   requesterName: string;
@@ -33,6 +43,7 @@ export type AdminOrder = {
   departmentName: string;
   submittedAt: string;
   lineItems: AdminOrderItem[];
+  activityLogs: AdminOrderActivityLog[];
 };
 
 type OrderTab = "awaiting" | "decided";
@@ -174,9 +185,12 @@ export function OrdersList({ orders }: { orders: AdminOrder[] }) {
                     {formatDate(order.submittedAt)}
                   </p>
                 </div>
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-col items-end gap-2">
                   <p className="font-mono text-[11px] text-text-muted">{order.id}</p>
-                  <OrderDenyActions orderId={order.id} pendingCount={orderPendingCount} />
+                  <div className="flex flex-col items-end gap-2">
+                    <OrderDenyActions orderId={order.id} pendingCount={orderPendingCount} />
+                    <OrderDeleteButton orderId={order.id} />
+                  </div>
                 </div>
               </div>
 
@@ -240,6 +254,24 @@ export function OrdersList({ orders }: { orders: AdminOrder[] }) {
                   </div>
                 ))}
               </div>
+
+              {order.activityLogs.length > 0 && (
+                <div className="border-t border-border pt-2">
+                  <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-text-muted">
+                    Activity log
+                  </p>
+                  <ul className="space-y-1">
+                    {order.activityLogs.map((log) => (
+                      <li key={log.id} className="text-xs text-text-muted">
+                        <span className="text-text">
+                          {formatActivityMessage(log.action, log.performedByName, log.details)}
+                        </span>
+                        <span className="ml-1">· {formatDate(log.createdAt)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </Card>
           );
         })

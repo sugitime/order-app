@@ -1,6 +1,7 @@
-import { LineItemStatus } from "@prisma/client";
+import { LineItemStatus, OrderActivityAction } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { logOrderActivity } from "@/lib/order-activity-log";
 import {
   maybeSendOrderReviewSummary,
   queueApprovedItems,
@@ -33,9 +34,16 @@ export async function POST(
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    const item = await prisma.lineItem.findUnique({ where: { id } });
+    const item = await prisma.lineItem.findUnique({
+      where: { id },
+      include: { order: { select: { deletedAt: true } } },
+    });
     if (!item) {
       return NextResponse.json({ error: "Line item not found" }, { status: 404 });
+    }
+
+    if (item.order.deletedAt) {
+      return NextResponse.json({ error: "Order has been deleted" }, { status: 400 });
     }
 
     if (item.status !== LineItemStatus.PENDING) {
@@ -58,6 +66,23 @@ export async function POST(
         reviewedById: user.id,
         reviewedAt: new Date(),
       },
+    });
+
+    const denialReason =
+      parsed.data.action === "deny" ? parsed.data.denialReason?.trim() : undefined;
+
+    await logOrderActivity({
+      orderId: updated.orderId,
+      lineItemId: id,
+      action:
+        parsed.data.action === "approve"
+          ? OrderActivityAction.LINE_ITEM_APPROVED
+          : OrderActivityAction.LINE_ITEM_DENIED,
+      performedById: user.id,
+      details:
+        parsed.data.action === "approve"
+          ? `${item.description} (qty ${item.quantity})`
+          : `${item.description} (qty ${item.quantity})${denialReason ? ` — ${denialReason}` : ""}`,
     });
 
     if (parsed.data.action === "approve") {

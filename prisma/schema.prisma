@@ -33,6 +33,7 @@ model User {
 
   reviewedItems        LineItem[]           @relation("ReviewedBy")
   passwordResetTokens  PasswordResetToken[]
+  orderActivityLogs    OrderActivityLog[]
 }
 
 model PasswordResetToken {
@@ -48,6 +49,13 @@ model PasswordResetToken {
   @@index([userId])
 }
 
+enum OrderActivityAction {
+  LINE_ITEM_APPROVED
+  LINE_ITEM_DENIED
+  ORDER_DENIED
+  ORDER_DELETED
+}
+
 model Order {
   id                  String    @id @default(cuid())
   requesterName       String
@@ -55,11 +63,30 @@ model Order {
   departmentName      String
   acknowledged        Boolean   @default(false)
   reviewSummarySentAt DateTime?
+  deletedAt           DateTime?
   submittedAt         DateTime  @default(now())
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  lineItems LineItem[]
+  lineItems    LineItem[]
+  activityLogs OrderActivityLog[]
+}
+
+model OrderActivityLog {
+  id            String              @id @default(cuid())
+  orderId       String
+  lineItemId    String?
+  action        OrderActivityAction
+  performedById String
+  details       String?
+  createdAt     DateTime            @default(now())
+
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  lineItem    LineItem? @relation(fields: [lineItemId], references: [id], onDelete: SetNull)
+  performedBy User      @relation(fields: [performedById], references: [id])
+
+  @@index([orderId])
+  @@index([createdAt])
 }
 
 model LineItem {
@@ -86,8 +113,9 @@ model LineItem {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
-  order      Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  reviewedBy User? @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  order        Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reviewedBy   User?              @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  activityLogs OrderActivityLog[]
 }
 
 model AppConfig {

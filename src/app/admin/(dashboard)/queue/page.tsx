@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 export default async function OrderQueuePage() {
   const items = await prisma.lineItem.findMany({
     where: {
+      order: { deletedAt: null },
       status: {
         in: [
           LineItemStatus.QUEUED,

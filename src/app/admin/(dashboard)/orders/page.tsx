@@ -5,12 +5,19 @@ import { prisma } from "@/lib/prisma";
 
 export default async function AdminOrdersPage() {
   const orders = await prisma.order.findMany({
+    where: { deletedAt: null },
     orderBy: { submittedAt: "desc" },
     include: {
       lineItems: {
         orderBy: { createdAt: "asc" },
         include: {
           reviewedBy: { select: { name: true } },
+        },
+      },
+      activityLogs: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          performedBy: { select: { name: true } },
         },
       },
     },
@@ -36,6 +43,13 @@ export default async function AdminOrdersPage() {
       priceLookupError: item.priceLookupError,
       reviewedAt: item.reviewedAt?.toISOString() ?? null,
       reviewedByName: item.reviewedBy?.name ?? null,
+    })),
+    activityLogs: order.activityLogs.map((log) => ({
+      id: log.id,
+      action: log.action,
+      details: log.details,
+      createdAt: log.createdAt.toISOString(),
+      performedByName: log.performedBy.name,
     })),
   }));
 
