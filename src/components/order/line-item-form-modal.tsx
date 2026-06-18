@@ -36,7 +36,7 @@ const emptyLookup = (): LookupState => ({
 
 function validateItem(item: DraftLineItem, lookup: LookupState): string | null {
   if (!item.amazonUrl.trim()) return "Amazon URL is required.";
-  if (!isAmazonUrl(item.amazonUrl.trim())) return "Only Amazon URLs are accepted.";
+  if (!isAmazonUrl(item.amazonUrl.trim())) return "Only Amazon and a.co URLs are accepted.";
   if (!item.description.trim()) {
     return lookup.loading
       ? "Loading item details from Amazon..."
@@ -240,7 +240,7 @@ export function LineItemFormModal({
               id="item-url"
               value={item.amazonUrl}
               onChange={(e) => updateField("amazonUrl", e.target.value)}
-              placeholder="https://www.amazon.com/dp/..."
+              placeholder="https://www.amazon.com/dp/... or https://a.co/..."
               type="url"
               autoFocus
             />

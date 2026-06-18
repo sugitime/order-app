@@ -1,21 +1,14 @@
+import { isAmazonProductUrl } from "@/lib/amazon-url";
 import { z } from "zod";
 
-const AMAZON_HOST_PATTERN =
-  /^https?:\/\/(www\.)?(amazon\.(com|co\.uk|de|fr|ca|co\.jp|in|com\.au|com\.mx|it|es|nl|se|pl|com\.br|ae|sa|sg|com\.tr)|smile\.amazon\.com|a\.co)\//i;
-
 export function isAmazonUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return AMAZON_HOST_PATTERN.test(parsed.href);
-  } catch {
-    return false;
-  }
+  return isAmazonProductUrl(url);
 }
 
 export const amazonUrlSchema = z
   .string()
   .url("Please enter a valid URL")
-  .refine(isAmazonUrl, "Only Amazon URLs are accepted");
+  .refine(isAmazonUrl, "Only Amazon and a.co URLs are accepted");
 
 export const lineItemSchema = z.object({
   description: z.string().min(1, "Description is required").max(500),

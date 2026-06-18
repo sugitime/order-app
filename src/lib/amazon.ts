@@ -1,3 +1,4 @@
+import { resolveAmazonUrl } from "@/lib/amazon-url";
 import { getAppSettings } from "@/lib/config";
 
 export type AmazonOrderResult =
@@ -38,7 +39,7 @@ export async function placeAmazonOrder(item: QueueItem): Promise<AmazonOrderResu
     };
   }
 
-  const asin = extractAsin(item.amazonUrl);
+  const asin = await extractAsin(item.amazonUrl);
   if (!asin) {
     return {
       success: false,
@@ -77,10 +78,12 @@ export async function placeAmazonOrder(item: QueueItem): Promise<AmazonOrderResu
   }
 }
 
-export function extractAsin(url: string): string | null {
+export function extractAsinFromResolvedUrl(url: string): string | null {
   try {
     const parsed = new URL(url);
-    const pathMatch = parsed.pathname.match(/\/(?:dp|gp\/product|gp\/aw\/d)\/([A-Z0-9]{10})/i);
+    const pathMatch = parsed.pathname.match(
+      /\/(?:dp|gp\/product|gp\/aw\/d|d)\/([A-Z0-9]{10})(?:[/?]|$)/i
+    );
     if (pathMatch) return pathMatch[1].toUpperCase();
 
     const asinParam = parsed.searchParams.get("asin");
@@ -92,4 +95,17 @@ export function extractAsin(url: string): string | null {
   } catch {
     return null;
   }
+}
+
+export async function extractAsin(url: string): Promise<string | null> {
+  const trimmed = url.trim();
+  const direct = extractAsinFromResolvedUrl(trimmed);
+  if (direct) return direct;
+
+  const resolved = await resolveAmazonUrl(trimmed);
+  if (resolved !== trimmed) {
+    return extractAsinFromResolvedUrl(resolved);
+  }
+
+  return null;
 }

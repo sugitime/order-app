@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { getAppSettings } from "@/lib/config";
 import { extractAsin } from "@/lib/amazon";
+import { resolveAmazonUrl } from "@/lib/amazon-url";
 
 export type AmazonProductLookup = {
   asin: string;
@@ -341,7 +342,8 @@ export function formatCurrency(amount: number, currency = "USD") {
 }
 
 export async function lookupAmazonProduct(amazonUrl: string): Promise<AmazonProductLookup> {
-  const asin = extractAsin(amazonUrl);
+  const resolvedUrl = await resolveAmazonUrl(amazonUrl);
+  const asin = await extractAsin(amazonUrl);
   if (!asin) {
     return {
       asin: "",
@@ -355,7 +357,7 @@ export async function lookupAmazonProduct(amazonUrl: string): Promise<AmazonProd
   }
 
   try {
-    const paapiResult = await lookupViaPaApi(asin, amazonUrl);
+    const paapiResult = await lookupViaPaApi(asin, resolvedUrl);
     if (paapiResult?.unitPrice) {
       return paapiResult;
     }
@@ -363,5 +365,5 @@ export async function lookupAmazonProduct(amazonUrl: string): Promise<AmazonProd
     // fall through to scraping
   }
 
-  return lookupViaScrape(amazonUrl, asin);
+  return lookupViaScrape(resolvedUrl, asin);
 }
