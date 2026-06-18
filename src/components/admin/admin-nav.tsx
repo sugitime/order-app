@@ -10,6 +10,7 @@ const links = [
   { href: "/admin/queue", label: "Order Queue", adminOnly: false },
   { href: "/admin/users", label: "Users", adminOnly: true },
   { href: "/admin/settings", label: "Settings", adminOnly: true },
+  { href: "/admin/account", label: "Account", adminOnly: false },
 ];
 
 export function AdminNav() {
