@@ -36,6 +36,10 @@ export async function GET() {
     return NextResponse.json({
       settings: {
         ...settingsForClient(settings),
+        gmail: {
+          ...settingsForClient(settings).gmail,
+          apiKey: maskSecret(settings.gmail.apiKey),
+        },
         amazon: {
           ...settings.amazon,
           secretAccessKey: maskSecret(settings.amazon.secretAccessKey),
@@ -84,6 +88,10 @@ export async function PUT(request: Request) {
     return NextResponse.json({
       settings: {
         ...settingsForClient(updated),
+        gmail: {
+          ...settingsForClient(updated).gmail,
+          apiKey: maskSecret(updated.gmail.apiKey),
+        },
         amazon: {
           ...updated.amazon,
           secretAccessKey: maskSecret(updated.amazon.secretAccessKey),

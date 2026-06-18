@@ -30,12 +30,14 @@ async function main() {
       id: "singleton",
       value: {
         gmail: {
+          provider: "resend",
           enabled: false,
           host: "smtp.gmail.com",
           port: 587,
           secure: false,
           user: "",
           password: "",
+          apiKey: "",
           fromEmail: "",
           fromName: "QM Order System",
         },

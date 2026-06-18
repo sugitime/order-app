@@ -50,16 +50,36 @@ export async function POST(request: Request) {
 
     if (!gmail.enabled) {
       return NextResponse.json(
-        { error: "Enable Gmail in settings before sending a test email." },
+        { error: "Enable email in settings before sending a test email." },
         { status: 400 }
       );
     }
 
-    if (!gmail.password || !gmail.fromEmail.trim()) {
+    const provider = gmail.provider ?? "smtp";
+
+    if (!gmail.fromEmail.trim()) {
+      return NextResponse.json(
+        { error: "From email is required before testing." },
+        { status: 400 }
+      );
+    }
+
+    if (provider === "resend") {
+      const apiKey = gmail.apiKey.trim() || process.env.RESEND_API_KEY?.trim() || "";
+      if (!apiKey) {
+        return NextResponse.json(
+          {
+            error:
+              "Resend API key is required. Save settings or set RESEND_API_KEY on the server.",
+          },
+          { status: 400 }
+        );
+      }
+    } else if (!gmail.password) {
       return NextResponse.json(
         {
           error:
-            "From email and SMTP password are required. Save settings or enter a password before testing.",
+            "SMTP password is required. Save settings or enter a password before testing.",
         },
         { status: 400 }
       );
@@ -78,7 +98,7 @@ export async function POST(request: Request) {
 
     if (!result.sent) {
       return NextResponse.json(
-        { error: "Email not sent. Check Gmail settings and enable email." },
+        { error: "Email not sent. Check email provider settings and enable email." },
         { status: 400 }
       );
     }
@@ -92,7 +112,7 @@ export async function POST(request: Request) {
     const message =
       error instanceof Error
         ? error.message
-        : "Failed to send test email. Check your SMTP host, port, and credentials.";
+        : "Failed to send test email. Check your email provider settings and credentials.";
 
     return NextResponse.json({ error: message }, { status: 400 });
   }

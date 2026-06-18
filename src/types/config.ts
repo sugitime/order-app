@@ -1,10 +1,14 @@
+export type EmailProvider = "smtp" | "resend";
+
 export type GmailConfig = {
+  provider: EmailProvider;
   enabled: boolean;
   host: string;
   port: number;
   secure: boolean;
   user: string;
   password: string;
+  apiKey: string;
   fromEmail: string;
   fromName: string;
 };

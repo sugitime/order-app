@@ -12,12 +12,14 @@ import type {
 
 const DEFAULT_SETTINGS: AppSettings = {
   gmail: {
+    provider: "smtp",
     enabled: false,
     host: "smtp.gmail.com",
     port: 587,
     secure: false,
     user: "",
     password: "",
+    apiKey: "",
     fromEmail: "",
     fromName: "QM Order System",
   },
@@ -77,10 +79,10 @@ export function maskSecret(value: string) {
 }
 
 export function settingsForClient(settings: AppSettings): AppSettings {
-  const { password: _password, ...gmailWithoutPassword } = settings.gmail;
+  const { password: _password, apiKey: _apiKey, ...gmailWithoutSecrets } = settings.gmail;
   return {
     ...settings,
-    gmail: { ...gmailWithoutPassword, password: "" },
+    gmail: { ...gmailWithoutSecrets, password: "", apiKey: "" },
   };
 }
 
@@ -91,7 +93,9 @@ export function mergeGmailConfig(
   return {
     ...current,
     ...incoming,
+    provider: incoming.provider ?? current.provider ?? "smtp",
     password: incoming.password?.trim() ? incoming.password : current.password,
+    apiKey: incoming.apiKey?.trim() ? incoming.apiKey : current.apiKey,
   };
 }
 

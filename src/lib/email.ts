@@ -10,7 +10,53 @@ function buildFromAddress(gmail: GmailConfig): Mail.Address {
   };
 }
 
-export async function sendEmailWithConfig(
+function resolveApiKey(gmail: GmailConfig): string {
+  return gmail.apiKey.trim() || process.env.RESEND_API_KEY?.trim() || "";
+}
+
+async function sendViaResend(
+  gmail: GmailConfig,
+  options: {
+    to: string;
+    subject: string;
+    text: string;
+    html?: string;
+  }
+) {
+  const apiKey = resolveApiKey(gmail);
+  const fromAddress = gmail.fromEmail.trim().toLowerCase();
+  const fromName = gmail.fromName.trim() || "QM Order System";
+
+  if (!apiKey) {
+    return { sent: false as const, reason: "not_configured" as const };
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: `${fromName} <${fromAddress}>`,
+      to: [options.to],
+      subject: options.subject,
+      text: options.text,
+      html: options.html ?? options.text.replace(/\n/g, "<br>"),
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Resend API error (${response.status}): ${errorBody || response.statusText}`
+    );
+  }
+
+  return { sent: true as const };
+}
+
+async function sendViaSmtp(
   gmail: GmailConfig,
   options: {
     to: string;
@@ -20,11 +66,6 @@ export async function sendEmailWithConfig(
   }
 ) {
   const fromAddress = gmail.fromEmail.trim().toLowerCase();
-
-  if (!gmail.enabled || !gmail.password || !fromAddress) {
-    return { sent: false as const, reason: "not_configured" as const };
-  }
-
   const from = buildFromAddress({ ...gmail, fromEmail: fromAddress });
 
   const transporter = nodemailer.createTransport({
@@ -52,6 +93,37 @@ export async function sendEmailWithConfig(
   return { sent: true as const };
 }
 
+export async function sendEmailWithConfig(
+  gmail: GmailConfig,
+  options: {
+    to: string;
+    subject: string;
+    text: string;
+    html?: string;
+  }
+) {
+  const fromAddress = gmail.fromEmail.trim().toLowerCase();
+
+  if (!gmail.enabled || !fromAddress) {
+    return { sent: false as const, reason: "not_configured" as const };
+  }
+
+  const provider = gmail.provider ?? "smtp";
+
+  if (provider === "resend") {
+    if (!resolveApiKey(gmail)) {
+      return { sent: false as const, reason: "not_configured" as const };
+    }
+    return sendViaResend(gmail, options);
+  }
+
+  if (!gmail.password) {
+    return { sent: false as const, reason: "not_configured" as const };
+  }
+
+  return sendViaSmtp(gmail, options);
+}
+
 export async function sendEmail(options: {
   to: string;
   subject: string;
@@ -60,11 +132,18 @@ export async function sendEmail(options: {
 }) {
   const settings = await getAppSettings();
 
-  if (
-    !settings.gmail.enabled ||
-    !settings.gmail.password ||
-    !settings.gmail.fromEmail.trim()
-  ) {
+  if (!settings.gmail.enabled || !settings.gmail.fromEmail.trim()) {
+    console.warn("Email not configured; skipping send:", options.subject);
+    return { sent: false, reason: "not_configured" as const };
+  }
+
+  const provider = settings.gmail.provider ?? "smtp";
+  const hasCredentials =
+    provider === "resend"
+      ? Boolean(resolveApiKey(settings.gmail))
+      : Boolean(settings.gmail.password);
+
+  if (!hasCredentials) {
     console.warn("Email not configured; skipping send:", options.subject);
     return { sent: false, reason: "not_configured" as const };
   }

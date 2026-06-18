@@ -13,6 +13,7 @@ type MaskedSettings = AppSettings;
 export function SettingsForm({ initialSettings }: { initialSettings: MaskedSettings }) {
   const [settings, setSettings] = useState(initialSettings);
   const [gmailPassword, setGmailPassword] = useState("");
+  const [resendApiKey, setResendApiKey] = useState("");
   const [amazonSecret, setAmazonSecret] = useState("");
   const [testEmail, setTestEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -66,14 +67,15 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
     setMessage("");
 
     try {
-      const { password: _gmailPw, ...gmailWithoutPassword } = settings.gmail;
+      const { password: _gmailPw, apiKey: _apiKey, ...gmailWithoutSecrets } = settings.gmail;
       const { secretAccessKey: _amazonSecret, ...amazonWithoutSecret } = settings.amazon;
 
       const payload = {
         gmail: {
-          ...gmailWithoutPassword,
+          ...gmailWithoutSecrets,
           user: settings.gmail.fromEmail.trim().toLowerCase(),
           ...(gmailPassword ? { password: gmailPassword } : {}),
+          ...(resendApiKey ? { apiKey: resendApiKey } : {}),
         },
         amazon: {
           ...amazonWithoutSecret,
@@ -98,6 +100,7 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
 
       setSettings(data.settings);
       setGmailPassword("");
+      setResendApiKey("");
       setAmazonSecret("");
       setMessage("Settings saved.");
     } catch {
@@ -113,7 +116,7 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
     setMessage("");
 
     try {
-      const { password: _gmailPw, ...gmailWithoutPassword } = settings.gmail;
+      const { password: _gmailPw, apiKey: _apiKey, ...gmailWithoutSecrets } = settings.gmail;
 
       const response = await fetch("/api/admin/settings/test-email", {
         method: "POST",
@@ -121,8 +124,9 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
         body: JSON.stringify({
           to: testEmail,
           gmail: {
-            ...gmailWithoutPassword,
+            ...gmailWithoutSecrets,
             ...(gmailPassword ? { password: gmailPassword } : {}),
+            ...(resendApiKey ? { apiKey: resendApiKey } : {}),
           },
         }),
       });
@@ -145,7 +149,7 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
     <form onSubmit={saveSettings} className="space-y-6">
       <Card className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-text">SMTP email</h2>
+          <h2 className="font-semibold text-text">Email delivery</h2>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -156,9 +160,23 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
           </label>
         </div>
         <p className="text-sm text-text-muted">
-          Messages are sent from the address below. SMTP authentication uses that same address
-          so your personal login is never exposed to recipients.
+          Use Resend (HTTP API) on Render&apos;s free plan — SMTP ports 25, 465,
+          and 587 are blocked. Upgrade to a paid Render instance or switch provider to SMTP for
+          Gmail and other mail servers.
         </p>
+        <div>
+          <label htmlFor="email-provider">Provider</label>
+          <select
+            id="email-provider"
+            value={settings.gmail.provider ?? "smtp"}
+            onChange={(e) =>
+              updateGmail("provider", e.target.value as AppSettings["gmail"]["provider"])
+            }
+          >
+            <option value="resend">Resend (HTTP API — works on Render free)</option>
+            <option value="smtp">SMTP (Gmail, etc. — requires paid Render plan)</option>
+          </select>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label>From email</label>
@@ -177,43 +195,61 @@ export function SettingsForm({ initialSettings }: { initialSettings: MaskedSetti
               placeholder="QM Order System"
             />
           </div>
-          <div>
-            <label>SMTP host</label>
-            <input
-              value={settings.gmail.host}
-              onChange={(e) => updateGmail("host", e.target.value)}
-            />
-          </div>
-          <div>
-            <label>SMTP port</label>
-            <input
-              type="number"
-              value={settings.gmail.port}
-              onChange={(e) => updateGmail("port", parseInt(e.target.value, 10) || 587)}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label>SMTP password</label>
-            <input
-              type="password"
-              value={gmailPassword}
-              onChange={(e) => setGmailPassword(e.target.value)}
-              placeholder="********"
-              autoComplete="new-password"
-            />
-            <p className="mt-1 text-xs text-text-muted">
-              Password for the From email account on your mail server.
-            </p>
-          </div>
+          {(settings.gmail.provider ?? "smtp") === "resend" ? (
+            <div className="sm:col-span-2">
+              <label>Resend API key</label>
+              <input
+                type="password"
+                value={resendApiKey}
+                onChange={(e) => setResendApiKey(e.target.value)}
+                placeholder={settings.gmail.apiKey || "re_..."}
+                autoComplete="new-password"
+              />
+              <p className="mt-1 text-xs text-text-muted">
+                Create a key at resend.com. The From email must use a domain verified in Resend.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label>SMTP host</label>
+                <input
+                  value={settings.gmail.host}
+                  onChange={(e) => updateGmail("host", e.target.value)}
+                />
+              </div>
+              <div>
+                <label>SMTP port</label>
+                <input
+                  type="number"
+                  value={settings.gmail.port}
+                  onChange={(e) => updateGmail("port", parseInt(e.target.value, 10) || 587)}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label>SMTP password</label>
+                <input
+                  type="password"
+                  value={gmailPassword}
+                  onChange={(e) => setGmailPassword(e.target.value)}
+                  placeholder="********"
+                  autoComplete="new-password"
+                />
+                <p className="mt-1 text-xs text-text-muted">
+                  Password for the From email account on your mail server.
+                </p>
+              </div>
+              <label className="flex items-center gap-2 text-sm sm:col-span-2">
+                <input
+                  type="checkbox"
+                  checked={settings.gmail.secure}
+                  onChange={(e) => updateGmail("secure", e.target.checked)}
+                />
+                Use TLS/SSL (port 465)
+              </label>
+            </>
+          )}
         </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={settings.gmail.secure}
-            onChange={(e) => updateGmail("secure", e.target.checked)}
-          />
-          Use TLS/SSL (port 465)
-        </label>
 
         <div className="flex flex-wrap items-end gap-3 border-t border-border pt-4">
           <div className="min-w-[240px] flex-1">

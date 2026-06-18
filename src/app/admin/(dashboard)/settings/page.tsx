@@ -15,6 +15,10 @@ export default async function AdminSettingsPage() {
 
   const maskedSettings = {
     ...settingsForClient(settings),
+    gmail: {
+      ...settingsForClient(settings).gmail,
+      apiKey: maskSecret(settings.gmail.apiKey),
+    },
     amazon: {
       ...settings.amazon,
       secretAccessKey: maskSecret(settings.amazon.secretAccessKey),

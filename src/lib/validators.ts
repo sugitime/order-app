@@ -64,12 +64,14 @@ export const changePasswordSchema = z
   });
 
 export const gmailConfigSchema = z.object({
+  provider: z.enum(["smtp", "resend"]).optional(),
   enabled: z.boolean(),
   host: z.string().min(1),
   port: z.coerce.number().int().min(1).max(65535),
   secure: z.boolean(),
   user: z.string(),
   password: z.string(),
+  apiKey: z.string().optional(),
   fromEmail: z.string().email().or(z.literal("")),
   fromName: z.string(),
 });

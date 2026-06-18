@@ -50,11 +50,20 @@ npm run db:seed
 npm run dev
 ```
 
-## Gmail setup
+## Email setup
+
+### Render free plan (SMTP blocked)
+
+Render **blocks outbound SMTP** on ports 25, 465, and 587 for free web services. There is no dashboard toggle to enable it — you must either:
+
+1. **Use Resend (recommended on free tier)** — In **Admin → Settings**, set provider to **Resend**, add your API key from [resend.com](https://resend.com), and use a From address on a domain verified in Resend.
+2. **Upgrade to a paid Render instance** — Starter ($7/mo) and above allow SMTP. Add a payment method in the [Render Dashboard](https://dashboard.render.com/billing), then change the web service plan from Free to Starter.
+
+### Gmail SMTP (local or paid Render)
 
 1. Enable 2-Step Verification on the Gmail account
 2. Create an [App Password](https://myaccount.google.com/apppasswords)
-3. In **Admin → Settings**, enter the Gmail address and app password
+3. In **Admin → Settings**, set provider to **SMTP**, enter the Gmail address and app password
 4. Send a test email to verify
 
 ## Amazon auto-ordering
