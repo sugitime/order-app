@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { ExportOrderedItemsButton } from "@/components/admin/export-ordered-items-button";
 import { OrdersList, type AdminOrder } from "@/components/admin/orders-list";
+import { syncAmazonOrderNumbersFromLineItems } from "@/lib/amazon-order-numbers";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminOrdersPage() {
@@ -21,8 +22,28 @@ export default async function AdminOrdersPage() {
           performedBy: { select: { name: true } },
         },
       },
+      amazonOrderNumbers: {
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
+
+  await Promise.all(
+    orders.map((order) => syncAmazonOrderNumbersFromLineItems(order.id))
+  );
+
+  const ordersWithNumbers = await prisma.order.findMany({
+    where: { id: { in: orders.map((order) => order.id) } },
+    include: {
+      amazonOrderNumbers: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  const amazonOrderNumbersByOrderId = new Map(
+    ordersWithNumbers.map((order) => [order.id, order.amazonOrderNumbers])
+  );
 
   const serializedOrders: AdminOrder[] = orders.map((order) => ({
     id: order.id,
@@ -52,6 +73,12 @@ export default async function AdminOrdersPage() {
       createdAt: log.createdAt.toISOString(),
       performedByName: log.performedBy?.name ?? null,
     })),
+    amazonOrderNumbers: (amazonOrderNumbersByOrderId.get(order.id) ?? []).map(
+      (entry) => ({
+        id: entry.id,
+        orderNumber: entry.orderNumber,
+      })
+    ),
   }));
 
   return (

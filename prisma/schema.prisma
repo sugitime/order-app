@@ -57,6 +57,7 @@ enum OrderActivityAction {
   LINE_ITEM_ORDERED
   LINE_ITEM_ORDER_FAILED
   LINE_ITEM_MANUAL_COMPLETE
+  AMAZON_ORDER_NUMBERS_UPDATED
   ORDER_DENIED
   ORDER_DELETED
 }
@@ -73,8 +74,22 @@ model Order {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  lineItems    LineItem[]
-  activityLogs OrderActivityLog[]
+  lineItems           LineItem[]
+  activityLogs        OrderActivityLog[]
+  amazonOrderNumbers  AmazonOrderNumber[]
+}
+
+model AmazonOrderNumber {
+  id          String   @id @default(cuid())
+  orderId     String
+  orderNumber String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, orderNumber])
+  @@index([orderId])
 }
 
 model OrderActivityLog {

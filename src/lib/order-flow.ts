@@ -1,4 +1,5 @@
 import { LineItemStatus } from "@prisma/client";
+import { addAmazonOrderNumber } from "@/lib/amazon-order-numbers";
 import { placeAmazonOrder } from "@/lib/amazon";
 import { getAppSettings } from "@/lib/config";
 import {
@@ -73,6 +74,8 @@ export async function processQueueItem(lineItemId: string) {
     include: { order: true },
   });
 
+  await addAmazonOrderNumber(updated.orderId, result.amazonOrderId);
+
   const settings = await getAppSettings();
   if (settings.notifications.notifyOnOrder && settings.notifications.adminEmail) {
     const rendered = renderEmailTemplate(settings.emailTemplates.orderPlaced, {
@@ -98,7 +101,7 @@ export async function manuallyCompleteOrder(
   amazonOrderId: string,
   trackingNumber?: string
 ) {
-  return prisma.lineItem.update({
+  const item = await prisma.lineItem.update({
     where: { id: lineItemId },
     data: {
       status: LineItemStatus.ORDERED,
@@ -108,6 +111,10 @@ export async function manuallyCompleteOrder(
       orderError: null,
     },
   });
+
+  await addAmazonOrderNumber(item.orderId, amazonOrderId);
+
+  return item;
 }
 
 export async function sendSubmissionNotification(orderId: string) {

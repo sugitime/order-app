@@ -1,11 +1,14 @@
-import type { LineItem, Order } from "@prisma/client";
+import type { AmazonOrderNumber, LineItem, Order } from "@prisma/client";
+import { OrderAmazonNumbersEditor } from "@/components/admin/order-amazon-numbers-editor";
 import { OrderDeleteButton } from "@/components/admin/order-delete-button";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { PrimeBadge } from "@/components/order/prime-badge";
 import { formatCurrency } from "@/lib/amazon-product";
 import { formatDate } from "@/lib/utils";
 
-type FulfilledQueueItem = LineItem & { order: Order };
+type FulfilledQueueItem = LineItem & {
+  order: Order & { amazonOrderNumbers: AmazonOrderNumber[] };
+};
 
 export function FulfilledQueueList({ items }: { items: FulfilledQueueItem[] }) {
   if (items.length === 0) {
@@ -45,11 +48,21 @@ export function FulfilledQueueList({ items }: { items: FulfilledQueueItem[] }) {
               className="overflow-hidden rounded-xl border border-border bg-surface-raised shadow-lg shadow-black/20"
             >
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border bg-surface-muted/60 px-4 py-3">
-                <div>
-                  <p className="font-medium text-text">{order.requesterName}</p>
-                  <p className="text-xs text-text-muted">
-                    {order.departmentName} · {orderItems.length} item(s) ordered
-                  </p>
+                <div className="min-w-0 flex-1 space-y-3">
+                  <div>
+                    <p className="font-medium text-text">{order.requesterName}</p>
+                    <p className="text-xs text-text-muted">
+                      {order.departmentName} · {orderItems.length} item(s) ordered
+                    </p>
+                  </div>
+                  <OrderAmazonNumbersEditor
+                    orderId={orderId}
+                    initialNumbers={order.amazonOrderNumbers.map((entry) => ({
+                      id: entry.id,
+                      orderNumber: entry.orderNumber,
+                    }))}
+                    compact
+                  />
                 </div>
                 <OrderDeleteButton orderId={orderId} />
               </div>

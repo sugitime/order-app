@@ -8,6 +8,7 @@ import { ProcessAllButton } from "@/components/admin/process-all-button";
 import { QueueItemActions } from "@/components/admin/queue-actions";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { PrimeBadge } from "@/components/order/prime-badge";
+import { syncAmazonOrderNumbersFromLineItems } from "@/lib/amazon-order-numbers";
 import { formatCurrency } from "@/lib/amazon-product";
 import { formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
@@ -26,11 +27,55 @@ export default async function OrderQueuePage() {
       },
     },
     orderBy: [{ status: "asc" }, { queuedAt: "asc" }],
-    include: { order: true },
+    include: {
+      order: {
+        include: {
+          amazonOrderNumbers: {
+            orderBy: { createdAt: "asc" },
+          },
+        },
+      },
+    },
   });
 
+  const fulfilledOrderIds = [
+    ...new Set(
+      items
+        .filter((item) => item.status === LineItemStatus.ORDERED)
+        .map((item) => item.orderId)
+    ),
+  ];
+
+  await Promise.all(
+    fulfilledOrderIds.map((orderId) => syncAmazonOrderNumbersFromLineItems(orderId))
+  );
+
+  const refreshedFulfilledOrders =
+    fulfilledOrderIds.length > 0
+      ? await prisma.order.findMany({
+          where: { id: { in: fulfilledOrderIds } },
+          include: {
+            amazonOrderNumbers: {
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        })
+      : [];
+
+  const amazonOrderNumbersByOrderId = new Map(
+    refreshedFulfilledOrders.map((order) => [order.id, order.amazonOrderNumbers])
+  );
+
   const activeItems = items.filter((item) => item.status !== LineItemStatus.ORDERED);
-  const fulfilledItems = items.filter((item) => item.status === LineItemStatus.ORDERED);
+  const fulfilledItems = items
+    .filter((item) => item.status === LineItemStatus.ORDERED)
+    .map((item) => ({
+      ...item,
+      order: {
+        ...item.order,
+        amazonOrderNumbers: amazonOrderNumbersByOrderId.get(item.orderId) ?? [],
+      },
+    }));
 
   const pendingCount = activeItems.filter(
     (item) => item.status === "QUEUED" || item.status === "FAILED"

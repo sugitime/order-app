@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { LineItemActions } from "@/components/admin/line-item-actions";
+import { OrderAmazonNumbersEditor } from "@/components/admin/order-amazon-numbers-editor";
 import { OrderDeleteButton } from "@/components/admin/order-delete-button";
 import { OrderDenyActions } from "@/components/admin/order-deny-actions";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -46,6 +47,11 @@ export type AdminOrderActivityLog = {
   performedByName: string | null;
 };
 
+export type AdminAmazonOrderNumber = {
+  id: string;
+  orderNumber: string;
+};
+
 export type AdminOrder = {
   id: string;
   requesterName: string;
@@ -54,6 +60,7 @@ export type AdminOrder = {
   submittedAt: string;
   lineItems: AdminOrderItem[];
   activityLogs: AdminOrderActivityLog[];
+  amazonOrderNumbers: AdminAmazonOrderNumber[];
 };
 
 type OrderTab = "awaiting" | "decided" | "fulfilled";
@@ -239,6 +246,16 @@ export function OrdersList({ orders }: { orders: AdminOrder[] }) {
                   </div>
                 </div>
               </div>
+
+              {(tab === "fulfilled" || order.amazonOrderNumbers.length > 0) && (
+                <div className="rounded-md border border-border bg-surface-muted/40 p-2">
+                  <OrderAmazonNumbersEditor
+                    orderId={order.id}
+                    initialNumbers={order.amazonOrderNumbers}
+                    compact
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 {order.lineItems.map((item) => (

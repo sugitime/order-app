@@ -1,4 +1,5 @@
 import { LineItemStatus } from "@prisma/client";
+import { formatAmazonOrderNumbers } from "@/lib/amazon-order-numbers";
 import { prisma } from "@/lib/prisma";
 
 export type OrderedItemExportRow = {
@@ -50,19 +51,33 @@ export async function fetchOrderedLineItems(): Promise<OrderedItemExportRow[]> {
         select: {
           requesterName: true,
           departmentName: true,
+          amazonOrderNumbers: {
+            orderBy: { createdAt: "asc" },
+            select: { orderNumber: true },
+          },
         },
       },
     },
   });
 
-  return items.map((item) => ({
-    requesterName: item.order.requesterName,
-    departmentName: item.order.departmentName,
-    description: item.description,
-    amazonUrl: item.amazonUrl,
-    amazonOrderId: item.amazonOrderId ?? "",
-    orderedAt: item.orderedAt!,
-  }));
+  return items.map((item) => {
+    const orderLevelNumbers = item.order.amazonOrderNumbers.map(
+      (entry) => entry.orderNumber
+    );
+    const amazonOrderId =
+      orderLevelNumbers.length > 0
+        ? formatAmazonOrderNumbers(orderLevelNumbers)
+        : item.amazonOrderId ?? "";
+
+    return {
+      requesterName: item.order.requesterName,
+      departmentName: item.order.departmentName,
+      description: item.description,
+      amazonUrl: item.amazonUrl,
+      amazonOrderId,
+      orderedAt: item.orderedAt!,
+    };
+  });
 }
 
 export function buildOrderedItemsCsv(rows: OrderedItemExportRow[]): string {
