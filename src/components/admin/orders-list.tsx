@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { LineItemActions } from "@/components/admin/line-item-actions";
+import { LineItemQuantityEditor } from "@/components/admin/line-item-quantity-editor";
 import { OrderAmazonNumbersEditor } from "@/components/admin/order-amazon-numbers-editor";
 import { OrderDeleteButton } from "@/components/admin/order-delete-button";
 import { OrderDenyActions } from "@/components/admin/order-deny-actions";
@@ -278,8 +279,12 @@ export function OrdersList({ orders }: { orders: AdminOrder[] }) {
                         <h3 className="text-sm font-medium text-text">{item.description}</h3>
                         <StatusBadge status={item.status} />
                       </div>
-                      <p className="text-xs text-text-muted">
-                        Qty {item.quantity}
+                      <p className="flex flex-wrap items-center gap-x-1 text-xs text-text-muted">
+                        <LineItemQuantityEditor
+                          lineItemId={item.id}
+                          quantity={item.quantity}
+                          status={item.status}
+                        />
                         {item.unitPrice != null && (
                           <>
                             {" "}

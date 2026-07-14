@@ -4,6 +4,7 @@ import { LineItemStatus } from "@prisma/client";
 import { Card } from "@/components/ui/card";
 import { ExportOrderedItemsButton } from "@/components/admin/export-ordered-items-button";
 import { FulfilledQueueList } from "@/components/admin/fulfilled-queue-list";
+import { LineItemQuantityEditor } from "@/components/admin/line-item-quantity-editor";
 import { ProcessAllButton } from "@/components/admin/process-all-button";
 import { QueueItemActions } from "@/components/admin/queue-actions";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -119,8 +120,12 @@ export default async function OrderQueuePage() {
                 <tr key={item.id} className="align-top">
                   <td className="px-4 py-4">
                     <p className="font-medium text-text">{item.description}</p>
-                    <p className="mt-1 text-xs text-text-muted">
-                      Qty {item.quantity}
+                    <p className="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-text-muted">
+                      <LineItemQuantityEditor
+                        lineItemId={item.id}
+                        quantity={item.quantity}
+                        status={item.status}
+                      />
                       {item.unitPrice != null && (
                         <>
                           {" "}

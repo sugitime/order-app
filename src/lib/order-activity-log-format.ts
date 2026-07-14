@@ -16,6 +16,8 @@ export function formatActivityAction(action: OrderActivityAction): string {
       return "failed to order a line item";
     case "LINE_ITEM_MANUAL_COMPLETE":
       return "manually completed a line item order";
+    case "LINE_ITEM_QUANTITY_UPDATED":
+      return "updated a line item quantity";
     case "AMAZON_ORDER_NUMBERS_UPDATED":
       return "updated Amazon order numbers";
     case "ORDER_DENIED":
@@ -71,6 +73,8 @@ export function formatActivityActionLabel(action: OrderActivityAction): string {
       return "Order failed";
     case "LINE_ITEM_MANUAL_COMPLETE":
       return "Manual complete";
+    case "LINE_ITEM_QUANTITY_UPDATED":
+      return "Quantity updated";
     case "AMAZON_ORDER_NUMBERS_UPDATED":
       return "Amazon order numbers updated";
     case "ORDER_DENIED":
