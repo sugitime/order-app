@@ -37,6 +37,7 @@ export type AdminOrderItem = {
   priceLookupError: string | null;
   reviewedAt: string | null;
   reviewedByName: string | null;
+  amazonOrderId: string | null;
 };
 
 export type AdminOrderActivityLog = {
@@ -97,7 +98,16 @@ export function OrdersList({ orders }: { orders: AdminOrder[] }) {
   const filteredOrders = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
     if (!trimmed) return tabOrders;
-    return tabOrders.filter((order) => order.id.toLowerCase().includes(trimmed));
+    return tabOrders.filter(
+      (order) =>
+        order.id.toLowerCase().includes(trimmed) ||
+        order.amazonOrderNumbers.some((entry) =>
+          entry.orderNumber.toLowerCase().includes(trimmed)
+        ) ||
+        order.lineItems.some((item) =>
+          item.amazonOrderId?.toLowerCase().includes(trimmed)
+        )
+    );
   }, [tabOrders, query]);
 
   const pendingItemCount = awaitingOrders.reduce(
@@ -110,7 +120,7 @@ export function OrdersList({ orders }: { orders: AdminOrder[] }) {
     orders.length === 0
       ? "No orders yet."
       : query.trim()
-        ? "No orders match that reference ID."
+        ? "No orders match that reference or Amazon order number."
         : tab === "awaiting"
           ? "No orders awaiting decision."
           : tab === "fulfilled"
@@ -199,13 +209,13 @@ export function OrdersList({ orders }: { orders: AdminOrder[] }) {
         </p>
         <div className="w-full max-w-xs">
           <label htmlFor="order-search" className="text-xs">
-            Search by reference ID
+            Search by reference ID or Amazon order #
           </label>
           <input
             id="order-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Paste reference ID..."
+            placeholder="Reference ID or Amazon order number..."
           />
         </div>
       </div>
@@ -305,6 +315,12 @@ export function OrdersList({ orders }: { orders: AdminOrder[] }) {
                       </p>
                       {item.denialReason && (
                         <p className="text-xs text-red-400">{item.denialReason}</p>
+                      )}
+                      {item.amazonOrderId && (
+                        <p className="text-[11px] text-text-muted">
+                          <span className="font-medium text-text">Amazon order:</span>{" "}
+                          {item.amazonOrderId}
+                        </p>
                       )}
                       {item.reviewedByName && (
                         <p className="text-[11px] text-text-muted">

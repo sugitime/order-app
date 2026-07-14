@@ -57,12 +57,14 @@ export function ActivityLogList({
     <div className="space-y-4">
       <form onSubmit={applyFilter} className="flex flex-wrap items-end gap-3">
         <div className="min-w-[280px] flex-1">
-          <label htmlFor="log-order-search">Search by order reference ID</label>
+          <label htmlFor="log-order-search">
+            Search by reference ID or Amazon order #
+          </label>
           <input
             id="log-order-search"
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
-            placeholder="Paste order reference ID..."
+            placeholder="Reference ID or Amazon order number..."
           />
         </div>
         <button
@@ -93,7 +95,7 @@ export function ActivityLogList({
         <Card className="p-4">
           <p className="text-center text-sm text-text-muted">
             {initialOrderId
-              ? "No log entries found for that order reference ID."
+              ? "No log entries found for that reference or Amazon order number."
               : "No activity logged yet."}
           </p>
         </Card>

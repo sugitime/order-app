@@ -65,6 +65,7 @@ export default async function AdminOrdersPage() {
       priceLookupError: item.priceLookupError,
       reviewedAt: item.reviewedAt?.toISOString() ?? null,
       reviewedByName: item.reviewedBy?.name ?? null,
+      amazonOrderId: item.amazonOrderId,
     })),
     activityLogs: order.activityLogs.map((log) => ({
       id: log.id,

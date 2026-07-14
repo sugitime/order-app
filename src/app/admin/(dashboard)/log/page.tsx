@@ -12,13 +12,57 @@ export default async function ActivityLogPage({
   const { orderId: orderIdQuery } = await searchParams;
   const orderIdFilter = orderIdQuery?.trim() ?? "";
 
+  const orderIdsFromAmazon = orderIdFilter
+    ? [
+        ...new Set([
+          ...(
+            await prisma.lineItem.findMany({
+              where: {
+                amazonOrderId: {
+                  contains: orderIdFilter,
+                  mode: "insensitive",
+                },
+              },
+              select: { orderId: true },
+              distinct: ["orderId"],
+            })
+          ).map((item) => item.orderId),
+          ...(
+            await prisma.amazonOrderNumber.findMany({
+              where: {
+                orderNumber: {
+                  contains: orderIdFilter,
+                  mode: "insensitive",
+                },
+              },
+              select: { orderId: true },
+              distinct: ["orderId"],
+            })
+          ).map((entry) => entry.orderId),
+        ]),
+      ]
+    : [];
+
   const logs = await prisma.orderActivityLog.findMany({
     where: orderIdFilter
       ? {
-          orderId: {
-            contains: orderIdFilter,
-            mode: "insensitive",
-          },
+          OR: [
+            {
+              orderId: {
+                contains: orderIdFilter,
+                mode: "insensitive",
+              },
+            },
+            ...(orderIdsFromAmazon.length
+              ? [{ orderId: { in: orderIdsFromAmazon } }]
+              : []),
+            {
+              details: {
+                contains: orderIdFilter,
+                mode: "insensitive",
+              },
+            },
+          ],
         }
       : undefined,
     orderBy: { createdAt: "desc" },
@@ -52,7 +96,7 @@ export default async function ActivityLogPage({
         <h1 className="text-2xl font-semibold text-text">Activity log</h1>
         <p className="mt-1 text-sm text-text-muted">
           Full audit trail of everything that happens on an order. Search by order reference ID
-          to see all related events.
+          or Amazon order number to see all related events.
         </p>
       </div>
       <Suspense fallback={<p className="text-sm text-text-muted">Loading...</p>}>
